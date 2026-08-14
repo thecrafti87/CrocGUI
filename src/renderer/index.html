@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self'">
+<title>CrocGUI</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="chrome">
+  <div class="chrome__brand">croc<em>gui</em></div>
+  <div class="chrome__status" id="binStatus" data-state="pending">
+    <span class="led"></span><span class="chrome__statusText">croc wird gesucht ...</span>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav class="rail" id="rail">
+    <button class="rail__item is-active" data-view="send" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M12 5l-6 6M12 5l6 6"/><path d="M4 21h16" class="thin"/></svg>
+      <span>Senden</span>
+    </button>
+    <button class="rail__item" data-view="receive" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M12 19l-6-6M12 19l6-6"/><path d="M4 21h16" class="thin"/></svg>
+      <span>Empfangen</span>
+    </button>
+    <button class="rail__item" data-view="relay" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.4"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9"/><path d="M4.4 4.4a10.7 10.7 0 0 0 0 15.2M19.6 4.4a10.7 10.7 0 0 1 0 15.2" class="thin"/></svg>
+      <span>Relay</span>
+    </button>
+    <button class="rail__item" data-view="settings" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+      <span>Einstellungen</span>
+    </button>
+    <div class="rail__mark">crocgui</div>
+  </nav>
+
+  <main class="stage" id="stage">
+
+    <!-- ============================ SENDEN ============================ -->
+    <section class="view is-active" id="view-send">
+      <div class="ghost">SEND</div>
+      <div class="head">
+        <p class="kicker">01 &middot; ausgehend</p>
+        <h1>Senden</h1>
+        <p class="lede">Dateien ablegen, Code weitergeben, fertig. Verschluesselt von Ende zu Ende, ohne Umweg ueber eine Cloud.</p>
+      </div>
+
+      <div class="seg" id="sendMode" role="tablist">
+        <button class="seg__btn is-on" data-mode="files" type="button">Dateien</button>
+        <button class="seg__btn" data-mode="text" type="button">Text</button>
+      </div>
+
+      <div class="pane" id="paneFiles">
+        <div class="drop" id="drop" tabindex="0">
+          <div class="drop__scales" aria-hidden="true"></div>
+          <div class="drop__inner">
+            <div class="drop__glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 17V6M12 6 7.5 10.5M12 6l4.5 4.5"/><path d="M4 20h16" class="thin"/></svg>
+            </div>
+            <p class="drop__title">Dateien oder Ordner hierher ziehen</p>
+            <p class="drop__hint">oder <button class="linky" id="pickBtn" type="button">durchsuchen</button></p>
+          </div>
+        </div>
+        <ul class="chips" id="fileList"></ul>
+      </div>
+
+      <div class="pane is-hidden" id="paneText">
+        <textarea id="sendText" class="field field--area" rows="5"
+                  placeholder="Text, Link oder Notiz, die auf dem anderen Rechner landen soll ..."></textarea>
+      </div>
+
+      <details class="fold" id="sendOptions">
+        <summary><span class="fold__chev" aria-hidden="true"></span>Optionen fuer diese Uebertragung</summary>
+        <div class="grid">
+          <label class="lbl">
+            <span>Eigener Code <em>optional, min. 6 Zeichen</em></span>
+            <input class="field mono" id="optCode" type="text" placeholder="wird sonst zufaellig erzeugt" spellcheck="false">
+          </label>
+          <label class="lbl">
+            <span>Ausschliessen <em>Teilzeichenketten, per Komma</em></span>
+            <input class="field" id="optExclude" type="text" placeholder=".git,node_modules" spellcheck="false">
+          </label>
+          <div class="lbl lbl--switches">
+            <span>Verhalten</span>
+            <label class="switch"><input type="checkbox" id="optZip"><i></i>Ordner vorher zippen</label>
+            <label class="switch"><input type="checkbox" id="optGit"><i></i>.gitignore beachten</label>
+            <label class="switch"><input type="checkbox" id="optNoLocal"><i></i>Kein lokales Netz nutzen</label>
+          </div>
+          <div class="lbl lbl--switches">
+            <span>Ablage beim Anbieter <em>Empfaenger muss nicht online sein</em></span>
+            <label class="switch"><input type="checkbox" id="optStore"><i></i>Verschluesselt zwischenlagern</label>
+            <div class="row row--tight">
+              <input class="field field--sm mono" id="optStoreDownloads" type="number" min="1" value="1" title="Erlaubte Abrufe">
+              <input class="field field--sm mono" id="optStoreExp" type="text" value="1d" title="Lebensdauer, z.B. 90m, 12h, 3d, 2w">
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div class="act">
+        <button class="btn btn--go" id="sendStart" type="button">Uebertragung starten</button>
+        <button class="btn btn--ghost" id="sendClear" type="button">Auswahl leeren</button>
+      </div>
+
+      <div id="sendJobs" class="jobs"></div>
+    </section>
+
+    <!-- ========================== EMPFANGEN ========================== -->
+    <section class="view" id="view-receive">
+      <div class="ghost">RECV</div>
+      <div class="head">
+        <p class="kicker">02 &middot; eingehend</p>
+        <h1>Empfangen</h1>
+        <p class="lede">Den Code vom anderen Rechner eintippen. Die Woerter sind der Schluessel &mdash; sie verlassen diesen Rechner nie im Klartext.</p>
+      </div>
+
+      <div class="codebox">
+        <input class="codebox__input mono" id="recvCode" type="text"
+               placeholder="wort-wort-wort" spellcheck="false" autocomplete="off">
+        <button class="btn btn--ghost btn--sm" id="recvPaste" type="button">Einfuegen</button>
+      </div>
+
+      <div class="grid grid--2">
+        <label class="lbl">
+          <span>Zielordner</span>
+          <div class="row">
+            <input class="field" id="recvOut" type="text" spellcheck="false" readonly>
+            <button class="btn btn--ghost btn--sm" id="recvPick" type="button">Waehlen</button>
+          </div>
+        </label>
+        <div class="lbl lbl--switches">
+          <span>Wenn eine Datei schon existiert</span>
+          <label class="switch"><input type="radio" name="clash" value="ask" checked><i></i>Automatisch best&auml;tigen</label>
+          <label class="switch"><input type="radio" name="clash" value="overwrite"><i></i>Immer &uuml;berschreiben</label>
+          <label class="switch"><input type="radio" name="clash" value="rename"><i></i>Unter neuem Namen sichern</label>
+        </div>
+      </div>
+
+      <div class="act">
+        <button class="btn btn--go btn--jade" id="recvStart" type="button">Empfangen</button>
+      </div>
+
+      <div id="recvJobs" class="jobs"></div>
+    </section>
+
+    <!-- ============================ RELAY ============================ -->
+    <section class="view" id="view-relay">
+      <div class="ghost">RLY</div>
+      <div class="head">
+        <p class="kicker">03 &middot; eigene Vermittlung</p>
+        <h1>Relay</h1>
+        <p class="lede">Ein eigener Vermittlungsserver auf diesem Rechner. Beide Seiten tragen die Adresse unter Einstellungen ein, dann laeuft nichts mehr ueber fremde Server.</p>
+      </div>
+
+      <div class="grid grid--2">
+        <label class="lbl">
+          <span>Ports <em>mindestens zwei, per Komma</em></span>
+          <input class="field mono" id="relayPorts" type="text" value="9009,9010,9011,9012,9013" spellcheck="false">
+        </label>
+        <label class="lbl">
+          <span>Host <em>optional, sonst alle Schnittstellen</em></span>
+          <input class="field mono" id="relayHost" type="text" placeholder="0.0.0.0" spellcheck="false">
+        </label>
+      </div>
+
+      <div class="act">
+        <button class="btn btn--go btn--amber" id="relayToggle" type="button">Relay starten</button>
+        <div class="relaystate" id="relayState"><span class="led"></span><span>gestoppt</span></div>
+      </div>
+
+      <pre class="console" id="relayLog" aria-live="polite">Noch kein Relay gestartet.</pre>
+    </section>
+
+    <!-- ========================= EINSTELLUNGEN ========================= -->
+    <section class="view" id="view-settings">
+      <div class="ghost">CFG</div>
+      <div class="head">
+        <p class="kicker">04 &middot; grundlagen</p>
+        <h1>Einstellungen</h1>
+        <p class="lede">Gilt fuer alle Uebertragungen. Wird sofort gespeichert.</p>
+      </div>
+
+      <div class="grid grid--2">
+        <label class="lbl lbl--wide">
+          <span>croc-Programm <em>leer lassen fuer automatische Suche</em></span>
+          <div class="row">
+            <input class="field mono" id="setCrocPath" type="text" placeholder="/usr/local/bin/croc" spellcheck="false">
+            <button class="btn btn--ghost btn--sm" id="setCrocPick" type="button">Waehlen</button>
+            <button class="btn btn--ghost btn--sm" id="setCrocDetect" type="button">Suchen</button>
+          </div>
+        </label>
+
+        <label class="lbl">
+          <span>Relay-Adresse <em>leer = oeffentlicher Standard-Relay</em></span>
+          <input class="field mono" id="setRelay" type="text" placeholder="meinserver.de:9009" spellcheck="false">
+        </label>
+        <label class="lbl">
+          <span>Relay-Passwort</span>
+          <input class="field mono" id="setPass" type="password" placeholder="pass123" spellcheck="false">
+        </label>
+
+        <label class="lbl">
+          <span>Standard-Zielordner</span>
+          <div class="row">
+            <input class="field" id="setOutDir" type="text" spellcheck="false" readonly>
+            <button class="btn btn--ghost btn--sm" id="setOutPick" type="button">Waehlen</button>
+          </div>
+        </label>
+        <label class="lbl">
+          <span>Verschluesselungskurve</span>
+          <select class="field" id="setCurve">
+            <option value="p256">p256 &mdash; Standard</option>
+            <option value="p384">p384</option>
+            <option value="p521">p521 &mdash; am staerksten</option>
+            <option value="siec">siec</option>
+            <option value="ed25519">ed25519</option>
+          </select>
+        </label>
+
+        <label class="lbl">
+          <span>Pruefsummen-Verfahren</span>
+          <select class="field" id="setHash">
+            <option value="xxhash">xxhash &mdash; Standard</option>
+            <option value="imohash">imohash &mdash; schneller bei grossen Dateien</option>
+            <option value="md5">md5</option>
+            <option value="highway">highway</option>
+          </select>
+        </label>
+        <label class="lbl">
+          <span>Upload drosseln <em>z.B. 500k oder 2M</em></span>
+          <input class="field mono" id="setThrottle" type="text" placeholder="unbegrenzt" spellcheck="false">
+        </label>
+
+        <label class="lbl">
+          <span>SOCKS5-Proxy</span>
+          <input class="field mono" id="setSocks5" type="text" placeholder="127.0.0.1:9050" spellcheck="false">
+        </label>
+        <div class="lbl lbl--switches">
+          <span>Sonstiges</span>
+          <label class="switch"><input type="checkbox" id="setNoCompress"><i></i>Keine Komprimierung</label>
+          <label class="switch"><input type="checkbox" id="setInternalDns"><i></i>Eigener DNS-Aufloeser</label>
+        </div>
+      </div>
+
+      <p class="note" id="settingsNote"></p>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

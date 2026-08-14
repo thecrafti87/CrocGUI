@@ -1,0 +1,38 @@
+{
+  "name": "croc-gui",
+  "version": "1.0.0",
+  "description": "Desktop-Oberflaeche fuer croc - sicher Dateien zwischen Rechnern uebertragen",
+  "main": "src/main/main.js",
+  "author": "CrocGUI",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --mac"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "electron": "^43.4.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "de.crocgui.app",
+    "productName": "CrocGUI",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "directories": {
+      "output": "build"
+    }
+  }
+}
