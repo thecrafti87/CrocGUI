@@ -147,6 +147,100 @@ body::after {
   font-style: normal;
   color: var(--lime);
 }
+.chrome__by {
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--haze-d);
+}
+
+.chrome__right {
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.seg--lang { margin-bottom: 0; padding: 2px; }
+.seg--lang .seg__btn {
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .1em;
+}
+
+/* ---------------------------------------------------------------- *
+   Hinweisleiste fuer neue Fassungen
+   ---------------------------------------------------------------- */
+
+.banner {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px var(--pad);
+  border-bottom: 1px solid var(--lime-d);
+  background: linear-gradient(180deg, rgba(198, 242, 78, .14), rgba(198, 242, 78, .06));
+  animation: rise .4s var(--ease);
+}
+.banner[hidden] { display: none; }
+.banner__text { flex: 1; font-size: 12.5px; font-weight: 600; }
+.banner__x {
+  border: 0;
+  background: none;
+  color: var(--haze);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.banner__x:hover { color: var(--bone); }
+
+/* ---------------------------------------------------------------- *
+   Nennung
+   ---------------------------------------------------------------- */
+
+.credits {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--haze);
+}
+.credits p { margin-bottom: 5px; }
+.credits__row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.credits__mark {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--lime);
+}
+.credits__ver {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--haze-d);
+}
+.credits__law {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  line-height: 1.8;
+  color: var(--haze-d);
+}
 
 .chrome__status {
   -webkit-app-region: no-drag;
@@ -379,6 +473,133 @@ h1 {
 .pane.is-hidden { display: none; }
 
 /* ---------------------------------------------------------------- *
+   Kontaktauswahl ueber Senden bzw. Empfangen
+   ---------------------------------------------------------------- */
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.pick.is-hidden { display: none; }
+.pick__label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--haze-d);
+}
+.pick__sel { width: auto; min-width: 270px; }
+
+/* ---------------------------------------------------------------- *
+   Kontaktkarten
+   ---------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ink-800);
+  animation: rise .4s var(--ease) backwards;
+  transition: border-color .25s var(--ease), background .25s var(--ease);
+}
+.card:hover { border-color: var(--line-hi); background: var(--ink-750); }
+.card.is-editing { border-color: var(--lime-d); background: var(--ink-750); }
+
+.card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.card__name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.015em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card__acts { display: flex; gap: 5px; flex: none; }
+.card__icon {
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--haze-d);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .18s var(--ease);
+}
+.card__icon:hover { color: var(--bone); border-color: var(--lime-d); }
+.card__icon[data-armed='1'] {
+  width: auto;
+  padding: 0 9px;
+  border-color: var(--coral);
+  color: var(--coral);
+}
+.card__icon svg {
+  width: 13px; height: 13px;
+  fill: none; stroke: currentColor;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.card__code {
+  display: block;
+  padding: 8px 11px;
+  border-radius: var(--r-sm);
+  background: var(--ink-900);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: -.03em;
+  line-height: 1.6;
+  color: var(--lime);
+  word-break: break-all;
+  user-select: text;
+}
+.card__note {
+  margin-top: 9px;
+  font-size: 12px;
+  color: var(--haze-d);
+}
+
+.empty {
+  padding: 26px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-md);
+  text-align: center;
+  color: var(--haze-d);
+  font-size: 13px;
+}
+
+.hint {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  color: var(--haze-d);
+}
+.hint[data-tone='good'] { color: var(--lime-d); }
+.hint[data-tone='bad'] { color: var(--coral); }
+
+.act--inset { margin: 0 16px 18px; }
+
+/* ---------------------------------------------------------------- *
    Ablagezone
    ---------------------------------------------------------------- */
 
@@ -548,28 +769,32 @@ select.field {
 .lbl { display: block; }
 .lbl--wide { grid-column: 1 / -1; }
 .lbl > span:first-child {
-  display: block;
-  margin-bottom: 7px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .09em;
   text-transform: uppercase;
   color: var(--haze);
 }
-.lbl > span:first-child em {
+/* Der Zusatz steht als Geschwister neben der Beschriftung, damit beide
+   getrennt uebersetzt werden koennen. */
+.lbl > em {
   font-style: normal;
+  font-size: 11px;
   font-weight: 400;
   letter-spacing: .02em;
   text-transform: none;
   color: var(--haze-d);
   margin-left: 6px;
 }
+.lbl > .field,
+.lbl > .row { margin-top: 7px; }
 
 .row { display: flex; gap: 8px; align-items: center; }
 .row .field { flex: 1; min-width: 0; }
 .row--tight { gap: 6px; margin-top: 9px; }
 
-.lbl--switches { display: flex; flex-direction: column; gap: 8px; }
+.lbl--switches { display: block; }
+.lbl--switches .switch { margin-top: 8px; }
 
 .switch {
   display: flex;
@@ -819,6 +1044,7 @@ select.field {
   animation: pop .5s .2s var(--ease) backwards;
 }
 .beacon__qr:not([src]) { display: none; }
+.beacon [hidden] { display: none !important; }
 
 /* ---------------------------------------------------------------- *
    Uebertragungen

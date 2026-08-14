@@ -8,6 +8,14 @@ contextBridge.exposeInMainWorld('croc', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
 
+  setLang: (code) => ipcRenderer.invoke('lang:set', code),
+  checkUpdate: () => ipcRenderer.invoke('update:check'),
+
+  listContacts: () => ipcRenderer.invoke('contacts:list'),
+  saveContact: (contact) => ipcRenderer.invoke('contacts:save', contact),
+  removeContact: (id) => ipcRenderer.invoke('contacts:remove', id),
+  generateCode: () => ipcRenderer.invoke('contacts:generate'),
+
   pickFiles: () => ipcRenderer.invoke('dialog:pickFiles'),
   pickFolder: (current) => ipcRenderer.invoke('dialog:pickFolder', current),
   pickBinary: () => ipcRenderer.invoke('dialog:pickBinary'),

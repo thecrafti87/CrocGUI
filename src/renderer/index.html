@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy"
@@ -10,48 +10,68 @@
 <body>
 
 <header class="chrome">
-  <div class="chrome__brand">croc<em>gui</em></div>
-  <div class="chrome__status" id="binStatus" data-state="pending">
-    <span class="led"></span><span class="chrome__statusText">croc wird gesucht ...</span>
+  <div class="chrome__brand">croc<em>gui</em><span class="chrome__by">by thecrafti87</span></div>
+  <div class="chrome__right">
+    <div class="seg seg--lang" id="langPick"></div>
+    <div class="chrome__status" id="binStatus" data-state="pending">
+      <span class="led"></span><span class="chrome__statusText" data-i18n="app.searching">looking for croc ...</span>
+    </div>
   </div>
 </header>
+
+<div class="banner" id="updateBanner" hidden>
+  <span class="banner__text" id="updateText"></span>
+  <button class="btn btn--sm btn--go" id="updateOpen" type="button"></button>
+  <button class="banner__x" id="updateClose" type="button" aria-label="close">&times;</button>
+</div>
 
 <div class="shell">
 
   <nav class="rail" id="rail">
     <button class="rail__item is-active" data-view="send" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M12 5l-6 6M12 5l6 6"/><path d="M4 21h16" class="thin"/></svg>
-      <span>Senden</span>
+      <span data-i18n="nav.send">Send</span>
     </button>
     <button class="rail__item" data-view="receive" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M12 19l-6-6M12 19l6-6"/><path d="M4 21h16" class="thin"/></svg>
-      <span>Empfangen</span>
+      <span data-i18n="nav.receive">Receive</span>
+    </button>
+    <button class="rail__item" data-view="contacts" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8.5" r="2.8"/><path d="M3.6 18.4a4.9 4.9 0 0 1 9.8 0"/><path d="M16.5 7h4M16.5 11h4M16.5 15h2.6" class="thin"/></svg>
+      <span data-i18n="nav.contacts">Contacts</span>
     </button>
     <button class="rail__item" data-view="relay" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.4"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9"/><path d="M4.4 4.4a10.7 10.7 0 0 0 0 15.2M19.6 4.4a10.7 10.7 0 0 1 0 15.2" class="thin"/></svg>
-      <span>Relay</span>
+      <span data-i18n="nav.relay">Relay</span>
     </button>
     <button class="rail__item" data-view="settings" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
-      <span>Einstellungen</span>
+      <span data-i18n="nav.settings">Settings</span>
     </button>
-    <div class="rail__mark">crocgui</div>
+    <div class="rail__mark">thecrafti87</div>
   </nav>
 
   <main class="stage" id="stage">
 
-    <!-- ============================ SENDEN ============================ -->
+    <!-- ============================= SEND ============================= -->
     <section class="view is-active" id="view-send">
       <div class="ghost">SEND</div>
       <div class="head">
-        <p class="kicker">01 &middot; ausgehend</p>
-        <h1>Senden</h1>
-        <p class="lede">Dateien ablegen, Code weitergeben, fertig. Verschluesselt von Ende zu Ende, ohne Umweg ueber eine Cloud.</p>
+        <p class="kicker" data-i18n="send.kicker"></p>
+        <h1 data-i18n="send.title"></h1>
+        <p class="lede" data-i18n="send.lede"></p>
       </div>
 
-      <div class="seg" id="sendMode" role="tablist">
-        <button class="seg__btn is-on" data-mode="files" type="button">Dateien</button>
-        <button class="seg__btn" data-mode="text" type="button">Text</button>
+      <div class="seg" id="sendMode">
+        <button class="seg__btn is-on" data-mode="files" type="button" data-i18n="send.modeFiles"></button>
+        <button class="seg__btn" data-mode="text" type="button" data-i18n="send.modeText"></button>
+      </div>
+
+      <div class="pick is-hidden" id="sendPickRow">
+        <span class="pick__label" data-i18n="send.to"></span>
+        <select class="field pick__sel" id="sendContact">
+          <option value="" data-i18n="send.oneTime"></option>
+        </select>
       </div>
 
       <div class="pane" id="paneFiles">
@@ -61,192 +81,251 @@
             <div class="drop__glyph" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M12 17V6M12 6 7.5 10.5M12 6l4.5 4.5"/><path d="M4 20h16" class="thin"/></svg>
             </div>
-            <p class="drop__title">Dateien oder Ordner hierher ziehen</p>
-            <p class="drop__hint">oder <button class="linky" id="pickBtn" type="button">durchsuchen</button></p>
+            <p class="drop__title" data-i18n="send.dropTitle"></p>
+            <p class="drop__hint"><span data-i18n="send.dropOr"></span>
+              <button class="linky" id="pickBtn" type="button" data-i18n="send.dropBrowse"></button></p>
           </div>
         </div>
         <ul class="chips" id="fileList"></ul>
       </div>
 
       <div class="pane is-hidden" id="paneText">
-        <textarea id="sendText" class="field field--area" rows="5"
-                  placeholder="Text, Link oder Notiz, die auf dem anderen Rechner landen soll ..."></textarea>
+        <textarea id="sendText" class="field field--area" rows="5" data-i18n-ph="send.textPlaceholder"></textarea>
       </div>
 
       <details class="fold" id="sendOptions">
-        <summary><span class="fold__chev" aria-hidden="true"></span>Optionen fuer diese Uebertragung</summary>
+        <summary><span class="fold__chev" aria-hidden="true"></span><span data-i18n="send.options"></span></summary>
         <div class="grid">
           <label class="lbl">
-            <span>Eigener Code <em>optional, min. 6 Zeichen</em></span>
-            <input class="field mono" id="optCode" type="text" placeholder="wird sonst zufaellig erzeugt" spellcheck="false">
+            <span data-i18n="send.ownCode"></span><em data-i18n="send.ownCodeHint"></em>
+            <input class="field mono" id="optCode" type="text" data-i18n-ph="send.ownCodePlaceholder" spellcheck="false">
           </label>
           <label class="lbl">
-            <span>Ausschliessen <em>Teilzeichenketten, per Komma</em></span>
+            <span data-i18n="send.exclude"></span><em data-i18n="send.excludeHint"></em>
             <input class="field" id="optExclude" type="text" placeholder=".git,node_modules" spellcheck="false">
           </label>
           <div class="lbl lbl--switches">
-            <span>Verhalten</span>
-            <label class="switch"><input type="checkbox" id="optZip"><i></i>Ordner vorher zippen</label>
-            <label class="switch"><input type="checkbox" id="optGit"><i></i>.gitignore beachten</label>
-            <label class="switch"><input type="checkbox" id="optNoLocal"><i></i>Kein lokales Netz nutzen</label>
+            <span data-i18n="send.behaviour"></span>
+            <label class="switch"><input type="checkbox" id="optZip"><i></i><span data-i18n="send.zip"></span></label>
+            <label class="switch"><input type="checkbox" id="optGit"><i></i><span data-i18n="send.git"></span></label>
+            <label class="switch"><input type="checkbox" id="optNoLocal"><i></i><span data-i18n="send.noLocal"></span></label>
           </div>
           <div class="lbl lbl--switches">
-            <span>Ablage beim Anbieter <em>Empfaenger muss nicht online sein</em></span>
-            <label class="switch"><input type="checkbox" id="optStore"><i></i>Verschluesselt zwischenlagern</label>
+            <span data-i18n="send.store"></span><em data-i18n="send.storeHint"></em>
+            <label class="switch"><input type="checkbox" id="optStore"><i></i><span data-i18n="send.storeOn"></span></label>
             <div class="row row--tight">
-              <input class="field field--sm mono" id="optStoreDownloads" type="number" min="1" value="1" title="Erlaubte Abrufe">
-              <input class="field field--sm mono" id="optStoreExp" type="text" value="1d" title="Lebensdauer, z.B. 90m, 12h, 3d, 2w">
+              <input class="field field--sm mono" id="optStoreDownloads" type="number" min="1" value="1" data-i18n-title="send.storeDownloads">
+              <input class="field field--sm mono" id="optStoreExp" type="text" value="1d" data-i18n-title="send.storeExpiry">
             </div>
           </div>
         </div>
       </details>
 
       <div class="act">
-        <button class="btn btn--go" id="sendStart" type="button">Uebertragung starten</button>
-        <button class="btn btn--ghost" id="sendClear" type="button">Auswahl leeren</button>
+        <button class="btn btn--go" id="sendStart" type="button" data-i18n="send.start"></button>
+        <button class="btn btn--ghost" id="sendClear" type="button" data-i18n="send.clear"></button>
       </div>
 
       <div id="sendJobs" class="jobs"></div>
     </section>
 
-    <!-- ========================== EMPFANGEN ========================== -->
+    <!-- ============================ RECEIVE =========================== -->
     <section class="view" id="view-receive">
       <div class="ghost">RECV</div>
       <div class="head">
-        <p class="kicker">02 &middot; eingehend</p>
-        <h1>Empfangen</h1>
-        <p class="lede">Den Code vom anderen Rechner eintippen. Die Woerter sind der Schluessel &mdash; sie verlassen diesen Rechner nie im Klartext.</p>
+        <p class="kicker" data-i18n="recv.kicker"></p>
+        <h1 data-i18n="recv.title"></h1>
+        <p class="lede" data-i18n="recv.lede"></p>
+      </div>
+
+      <div class="pick is-hidden" id="recvPickRow">
+        <span class="pick__label" data-i18n="recv.from"></span>
+        <select class="field pick__sel" id="recvContact">
+          <option value="" data-i18n="recv.manual"></option>
+        </select>
       </div>
 
       <div class="codebox">
         <input class="codebox__input mono" id="recvCode" type="text"
-               placeholder="wort-wort-wort" spellcheck="false" autocomplete="off">
-        <button class="btn btn--ghost btn--sm" id="recvPaste" type="button">Einfuegen</button>
+               data-i18n-ph="recv.codePlaceholder" spellcheck="false" autocomplete="off">
+        <button class="btn btn--ghost btn--sm" id="recvPaste" type="button" data-i18n="recv.paste"></button>
       </div>
 
       <div class="grid grid--2">
         <label class="lbl">
-          <span>Zielordner</span>
+          <span data-i18n="recv.outDir"></span>
           <div class="row">
             <input class="field" id="recvOut" type="text" spellcheck="false" readonly>
-            <button class="btn btn--ghost btn--sm" id="recvPick" type="button">Waehlen</button>
+            <button class="btn btn--ghost btn--sm" id="recvPick" type="button" data-i18n="recv.choose"></button>
           </div>
         </label>
         <div class="lbl lbl--switches">
-          <span>Wenn eine Datei schon existiert</span>
-          <label class="switch"><input type="radio" name="clash" value="ask" checked><i></i>Automatisch best&auml;tigen</label>
-          <label class="switch"><input type="radio" name="clash" value="overwrite"><i></i>Immer &uuml;berschreiben</label>
-          <label class="switch"><input type="radio" name="clash" value="rename"><i></i>Unter neuem Namen sichern</label>
+          <span data-i18n="recv.clash"></span>
+          <label class="switch"><input type="radio" name="clash" value="ask" checked><i></i><span data-i18n="recv.clashAuto"></span></label>
+          <label class="switch"><input type="radio" name="clash" value="overwrite"><i></i><span data-i18n="recv.clashOverwrite"></span></label>
+          <label class="switch"><input type="radio" name="clash" value="rename"><i></i><span data-i18n="recv.clashRename"></span></label>
         </div>
       </div>
 
       <div class="act">
-        <button class="btn btn--go btn--jade" id="recvStart" type="button">Empfangen</button>
+        <button class="btn btn--go btn--jade" id="recvStart" type="button" data-i18n="recv.start"></button>
       </div>
 
       <div id="recvJobs" class="jobs"></div>
     </section>
 
-    <!-- ============================ RELAY ============================ -->
+    <!-- =========================== CONTACTS ========================== -->
+    <section class="view" id="view-contacts">
+      <div class="ghost">ADR</div>
+      <div class="head">
+        <p class="kicker" data-i18n="contacts.kicker"></p>
+        <h1 data-i18n="contacts.title"></h1>
+        <p class="lede" data-i18n="contacts.lede"></p>
+      </div>
+
+      <div class="cards" id="contactList"></div>
+
+      <details class="fold" id="contactFold">
+        <summary><span class="fold__chev" aria-hidden="true"></span><span id="contactFoldTitle"></span></summary>
+        <div class="grid">
+          <label class="lbl">
+            <span data-i18n="contacts.name"></span>
+            <input class="field" id="contactName" type="text" data-i18n-ph="contacts.namePlaceholder" spellcheck="false">
+          </label>
+          <label class="lbl">
+            <span data-i18n="contacts.note"></span><em data-i18n="contacts.optional"></em>
+            <input class="field" id="contactNote" type="text" data-i18n-ph="contacts.notePlaceholder" spellcheck="false">
+          </label>
+          <label class="lbl lbl--wide">
+            <span data-i18n="contacts.code"></span><em data-i18n="contacts.codeHint"></em>
+            <div class="row">
+              <input class="field mono" id="contactCode" type="text" data-i18n-ph="contacts.codePlaceholder" spellcheck="false">
+              <button class="btn btn--ghost btn--sm" id="contactDice" type="button" data-i18n="contacts.dice"></button>
+            </div>
+            <p class="hint" id="contactStrength"></p>
+          </label>
+        </div>
+        <div class="act act--inset">
+          <button class="btn btn--go btn--sm" id="contactSave" type="button" data-i18n="contacts.save"></button>
+          <button class="btn btn--ghost btn--sm" id="contactReset" type="button" data-i18n="contacts.discard"></button>
+        </div>
+      </details>
+
+      <p class="note" data-i18n="contacts.warning"></p>
+    </section>
+
+    <!-- ============================= RELAY ============================ -->
     <section class="view" id="view-relay">
       <div class="ghost">RLY</div>
       <div class="head">
-        <p class="kicker">03 &middot; eigene Vermittlung</p>
-        <h1>Relay</h1>
-        <p class="lede">Ein eigener Vermittlungsserver auf diesem Rechner. Beide Seiten tragen die Adresse unter Einstellungen ein, dann laeuft nichts mehr ueber fremde Server.</p>
+        <p class="kicker" data-i18n="relay.kicker"></p>
+        <h1 data-i18n="relay.title"></h1>
+        <p class="lede" data-i18n="relay.lede"></p>
       </div>
 
       <div class="grid grid--2">
         <label class="lbl">
-          <span>Ports <em>mindestens zwei, per Komma</em></span>
+          <span data-i18n="relay.ports"></span><em data-i18n="relay.portsHint"></em>
           <input class="field mono" id="relayPorts" type="text" value="9009,9010,9011,9012,9013" spellcheck="false">
         </label>
         <label class="lbl">
-          <span>Host <em>optional, sonst alle Schnittstellen</em></span>
+          <span data-i18n="relay.host"></span><em data-i18n="relay.hostHint"></em>
           <input class="field mono" id="relayHost" type="text" placeholder="0.0.0.0" spellcheck="false">
         </label>
       </div>
 
       <div class="act">
-        <button class="btn btn--go btn--amber" id="relayToggle" type="button">Relay starten</button>
-        <div class="relaystate" id="relayState"><span class="led"></span><span>gestoppt</span></div>
+        <button class="btn btn--go btn--amber" id="relayToggle" type="button"></button>
+        <div class="relaystate" id="relayState"><span class="led"></span><span></span></div>
       </div>
 
-      <pre class="console" id="relayLog" aria-live="polite">Noch kein Relay gestartet.</pre>
+      <pre class="console" id="relayLog" aria-live="polite"></pre>
     </section>
 
-    <!-- ========================= EINSTELLUNGEN ========================= -->
+    <!-- ============================ SETTINGS ========================== -->
     <section class="view" id="view-settings">
       <div class="ghost">CFG</div>
       <div class="head">
-        <p class="kicker">04 &middot; grundlagen</p>
-        <h1>Einstellungen</h1>
-        <p class="lede">Gilt fuer alle Uebertragungen. Wird sofort gespeichert.</p>
+        <p class="kicker" data-i18n="set.kicker"></p>
+        <h1 data-i18n="set.title"></h1>
+        <p class="lede" data-i18n="set.lede"></p>
       </div>
 
       <div class="grid grid--2">
         <label class="lbl lbl--wide">
-          <span>croc-Programm <em>leer lassen fuer automatische Suche</em></span>
+          <span data-i18n="set.crocPath"></span><em data-i18n="set.crocPathHint"></em>
           <div class="row">
             <input class="field mono" id="setCrocPath" type="text" placeholder="/usr/local/bin/croc" spellcheck="false">
-            <button class="btn btn--ghost btn--sm" id="setCrocPick" type="button">Waehlen</button>
-            <button class="btn btn--ghost btn--sm" id="setCrocDetect" type="button">Suchen</button>
+            <button class="btn btn--ghost btn--sm" id="setCrocPick" type="button" data-i18n="set.choose"></button>
+            <button class="btn btn--ghost btn--sm" id="setCrocDetect" type="button" data-i18n="set.search"></button>
           </div>
         </label>
 
         <label class="lbl">
-          <span>Relay-Adresse <em>leer = oeffentlicher Standard-Relay</em></span>
-          <input class="field mono" id="setRelay" type="text" placeholder="meinserver.de:9009" spellcheck="false">
+          <span data-i18n="set.relay"></span><em data-i18n="set.relayHint"></em>
+          <input class="field mono" id="setRelay" type="text" placeholder="myserver.net:9009" spellcheck="false">
         </label>
         <label class="lbl">
-          <span>Relay-Passwort</span>
+          <span data-i18n="set.pass"></span>
           <input class="field mono" id="setPass" type="password" placeholder="pass123" spellcheck="false">
         </label>
 
         <label class="lbl">
-          <span>Standard-Zielordner</span>
+          <span data-i18n="set.outDir"></span>
           <div class="row">
             <input class="field" id="setOutDir" type="text" spellcheck="false" readonly>
-            <button class="btn btn--ghost btn--sm" id="setOutPick" type="button">Waehlen</button>
+            <button class="btn btn--ghost btn--sm" id="setOutPick" type="button" data-i18n="set.choose"></button>
           </div>
         </label>
         <label class="lbl">
-          <span>Verschluesselungskurve</span>
+          <span data-i18n="set.curve"></span>
           <select class="field" id="setCurve">
-            <option value="p256">p256 &mdash; Standard</option>
+            <option value="p256" data-i18n="set.curveDefault"></option>
             <option value="p384">p384</option>
-            <option value="p521">p521 &mdash; am staerksten</option>
+            <option value="p521" data-i18n="set.curveStrongest"></option>
             <option value="siec">siec</option>
             <option value="ed25519">ed25519</option>
           </select>
         </label>
 
         <label class="lbl">
-          <span>Pruefsummen-Verfahren</span>
+          <span data-i18n="set.hash"></span>
           <select class="field" id="setHash">
-            <option value="xxhash">xxhash &mdash; Standard</option>
-            <option value="imohash">imohash &mdash; schneller bei grossen Dateien</option>
+            <option value="xxhash" data-i18n="set.hashDefault"></option>
+            <option value="imohash" data-i18n="set.hashImo"></option>
             <option value="md5">md5</option>
             <option value="highway">highway</option>
           </select>
         </label>
         <label class="lbl">
-          <span>Upload drosseln <em>z.B. 500k oder 2M</em></span>
-          <input class="field mono" id="setThrottle" type="text" placeholder="unbegrenzt" spellcheck="false">
+          <span data-i18n="set.throttle"></span><em data-i18n="set.throttleHint"></em>
+          <input class="field mono" id="setThrottle" type="text" data-i18n-ph="set.throttlePlaceholder" spellcheck="false">
         </label>
 
         <label class="lbl">
-          <span>SOCKS5-Proxy</span>
+          <span data-i18n="set.socks5"></span>
           <input class="field mono" id="setSocks5" type="text" placeholder="127.0.0.1:9050" spellcheck="false">
         </label>
         <div class="lbl lbl--switches">
-          <span>Sonstiges</span>
-          <label class="switch"><input type="checkbox" id="setNoCompress"><i></i>Keine Komprimierung</label>
-          <label class="switch"><input type="checkbox" id="setInternalDns"><i></i>Eigener DNS-Aufloeser</label>
+          <span data-i18n="set.misc"></span>
+          <label class="switch"><input type="checkbox" id="setNoCompress"><i></i><span data-i18n="set.noCompress"></span></label>
+          <label class="switch"><input type="checkbox" id="setInternalDns"><i></i><span data-i18n="set.internalDns"></span></label>
+          <label class="switch"><input type="checkbox" id="setAutoUpdate"><i></i><span data-i18n="set.autoUpdate"></span></label>
         </div>
       </div>
 
       <p class="note" id="settingsNote"></p>
+
+      <footer class="credits">
+        <div class="credits__row">
+          <span class="credits__mark">crocgui</span>
+          <span class="credits__ver" id="appVersion"></span>
+        </div>
+        <p><button class="linky" id="creditMade" type="button"></button></p>
+        <p><button class="linky" id="creditCroc" type="button"></button></p>
+        <p class="credits__law" data-i18n="credit.license"></p>
+        <p class="credits__law" id="updateLine"></p>
+      </footer>
     </section>
 
   </main>
@@ -254,6 +333,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -2,10 +2,14 @@
 
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
+const crypto = require('crypto');
 const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu } = require('electron');
 const QRCode = require('qrcode');
 
 const settings = require('./settings');
+const words = require('./words');
+const { t, DEFAULT_LANG } = require('../renderer/i18n');
 const { detect, Runner } = require('./croc');
 
 let win = null;
@@ -40,69 +44,120 @@ function createWindow() {
 }
 
 function buildMenu() {
+  const lang = settings.load().lang || DEFAULT_LANG;
+  const m = (key) => t(lang, key);
+
   const template = [
     ...(process.platform === 'darwin'
       ? [{
           label: app.name,
           submenu: [
-            { role: 'about', label: 'Ueber CrocGUI' },
+            { role: 'about', label: m('menu.about') },
             { type: 'separator' },
-            { role: 'hide', label: 'CrocGUI ausblenden' },
-            { role: 'hideOthers', label: 'Andere ausblenden' },
+            { role: 'hide', label: m('menu.hide') },
+            { role: 'hideOthers', label: m('menu.hideOthers') },
             { type: 'separator' },
-            { role: 'quit', label: 'CrocGUI beenden' }
+            { role: 'quit', label: m('menu.quit') }
           ]
         }]
       : []),
     {
-      label: 'Datei',
+      label: m('menu.file'),
       submenu: [
         {
-          label: 'Dateien senden ...',
+          label: m('menu.sendFiles'),
           accelerator: 'CmdOrCtrl+O',
           click: () => win && win.webContents.send('menu:action', 'pick-files')
         },
         {
-          label: 'Code empfangen',
+          label: m('menu.receiveCode'),
           accelerator: 'CmdOrCtrl+R',
           click: () => win && win.webContents.send('menu:action', 'goto-receive')
         },
         { type: 'separator' },
-        { role: process.platform === 'darwin' ? 'close' : 'quit', label: 'Schliessen' }
+        { role: process.platform === 'darwin' ? 'close' : 'quit', label: m('menu.close') }
       ]
     },
     {
-      label: 'Bearbeiten',
+      label: m('menu.edit'),
       submenu: [
-        { role: 'undo', label: 'Widerrufen' },
-        { role: 'redo', label: 'Wiederholen' },
+        { role: 'undo', label: m('menu.undo') },
+        { role: 'redo', label: m('menu.redo') },
         { type: 'separator' },
-        { role: 'cut', label: 'Ausschneiden' },
-        { role: 'copy', label: 'Kopieren' },
-        { role: 'paste', label: 'Einsetzen' },
-        { role: 'selectAll', label: 'Alles auswaehlen' }
+        { role: 'cut', label: m('menu.cut') },
+        { role: 'copy', label: m('menu.copy') },
+        { role: 'paste', label: m('menu.paste') },
+        { role: 'selectAll', label: m('menu.selectAll') }
       ]
     },
     {
-      label: 'Ansicht',
+      label: m('menu.view'),
       submenu: [
-        { role: 'reload', label: 'Neu laden' },
-        { role: 'toggleDevTools', label: 'Entwicklerwerkzeuge' },
+        { role: 'reload', label: m('menu.reload') },
+        { role: 'toggleDevTools', label: m('menu.devTools') },
         { type: 'separator' },
-        { role: 'resetZoom', label: 'Originalgroesse' },
-        { role: 'zoomIn', label: 'Groesser' },
-        { role: 'zoomOut', label: 'Kleiner' },
+        { role: 'resetZoom', label: m('menu.actualSize') },
+        { role: 'zoomIn', label: m('menu.zoomIn') },
+        { role: 'zoomOut', label: m('menu.zoomOut') },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Vollbild' }
+        { role: 'togglefullscreen', label: m('menu.fullscreen') }
       ]
     }
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+/* ------------------------------------------------------------------ *
+ * Nach einer neuen Fassung sehen
+ *
+ * Bewusst nur ein Blick auf die veroeffentlichten Fassungen, kein
+ * stilles Selbstaktualisieren: das setzt auf macOS eine mit einer
+ * Apple-Developer-ID signierte App voraus.
+ * ------------------------------------------------------------------ */
+
+const REPO = 'thecrafti87/CrocGUI';
+
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, {
+      headers: { 'User-Agent': 'CrocGUI', Accept: 'application/vnd.github+json' },
+      timeout: 8000
+    }, (res) => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => {
+        if (res.statusCode === 404) return resolve(null);
+        if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
+        try { resolve(JSON.parse(body)); } catch (err) { reject(err); }
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('Zeitüberschreitung')));
+    req.on('error', reject);
+  });
+}
+
+/** Ist a groesser als b? Vergleicht Haupt-, Neben- und Fehlerstand. */
+function isNewer(a, b) {
+  const parse = (v) => String(v).replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0);
+  const pa = parse(a);
+  const pb = parse(b);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+  }
+  return false;
+}
+
 app.whenReady().then(() => {
   runner = new Runner((id, event) => {
     if (win && !win.isDestroyed()) win.webContents.send('transfer:event', { id, event });
+  });
+
+  app.setAboutPanelOptions({
+    applicationName: 'CrocGUI',
+    applicationVersion: app.getVersion(),
+    credits: 'CrocGUI by thecrafti87\ncroc by Zack Scholl',
+    copyright: 'MIT'
   });
 
   buildMenu();
@@ -131,10 +186,64 @@ ipcMain.handle('croc:detect', async (_e, force) => detect(Boolean(force)));
 ipcMain.handle('settings:get', () => ({
   values: settings.load(),
   defaultOutDir: settings.defaultOutDir(),
-  file: settings.file()
+  file: settings.file(),
+  version: app.getVersion()
 }));
 
+ipcMain.handle('lang:set', (_e, code) => {
+  settings.save({ lang: code });
+  buildMenu();
+  return code;
+});
+
+ipcMain.handle('update:check', async () => {
+  const current = app.getVersion();
+  try {
+    const release = await fetchJson(`https://api.github.com/repos/${REPO}/releases/latest`);
+    if (!release || !release.tag_name) return { ok: true, latest: null, current };
+    const latest = String(release.tag_name).replace(/^v/, '');
+    return {
+      ok: true,
+      latest,
+      current,
+      newer: isNewer(latest, current),
+      url: release.html_url || `https://github.com/${REPO}/releases/latest`
+    };
+  } catch {
+    return { ok: false, current };
+  }
+});
+
 ipcMain.handle('settings:set', (_e, patch) => settings.save(patch || {}));
+
+/* Kontakte - feste Codes je Gegenstelle */
+
+ipcMain.handle('contacts:list', () => settings.load().contacts || []);
+
+ipcMain.handle('contacts:save', (_e, contact) => {
+  const list = [...(settings.load().contacts || [])];
+  const entry = {
+    id: contact.id || crypto.randomUUID(),
+    name: String(contact.name || '').trim(),
+    code: String(contact.code || '').trim(),
+    note: String(contact.note || '').trim()
+  };
+  const at = list.findIndex((c) => c.id === entry.id);
+  if (at >= 0) list[at] = entry;
+  else list.push(entry);
+  list.sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  return settings.save({ contacts: list }).contacts;
+});
+
+ipcMain.handle('contacts:remove', (_e, id) => {
+  const list = (settings.load().contacts || []).filter((c) => c.id !== id);
+  return settings.save({ contacts: list }).contacts;
+});
+
+ipcMain.handle('contacts:generate', () => ({
+  code: words.makeCode(),
+  bits: words.strengthBits()
+}));
 
 ipcMain.handle('dialog:pickFiles', async () => {
   const res = await dialog.showOpenDialog(win, {

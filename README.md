@@ -1,5 +1,7 @@
 # CrocGUI
 
+von **thecrafti87** — croc von **Zack Scholl**
+
 Eine Desktop-Oberflaeche fuer [croc](https://github.com/schollz/croc) — dem
 Werkzeug, mit dem sich Dateien direkt zwischen zwei Rechnern uebertragen
 lassen, Ende-zu-Ende verschluesselt und ohne Cloud dazwischen.
@@ -7,6 +9,9 @@ lassen, Ende-zu-Ende verschluesselt und ohne Cloud dazwischen.
 CrocGUI ruft das vorhandene `croc`-Programm auf und macht dessen Ausgabe
 sichtbar: Code-Wortgruppe gross und kopierbar, QR-Code daneben, Fortschritt
 als Balken statt als Zeichensalat im Terminal.
+
+Die Oberflaeche spricht **Englisch, Deutsch und Franzoesisch**; umgeschaltet
+wird oben rechts in der Titelleiste. Voreingestellt ist Englisch.
 
 ## Voraussetzungen
 
@@ -52,6 +57,12 @@ Bei Namenskonflikten wahlweise ueberschreiben oder unter neuem Namen sichern.
 Wer die Relay-Adresse auf beiden Seiten unter *Einstellungen* eintraegt,
 haelt den gesamten Verkehr im eigenen Netz.
 
+**Kontakte** — ein fester Code je Gegenstelle, damit die Woerter nicht jedes
+Mal neu ausgetauscht werden muessen. Beim Anlegen wuerfelt die App den Code
+aus kryptografisch sicherem Zufall (sechs Woerter, rund 50 Bit). In *Senden*
+und *Empfangen* erscheint dann ein Auswahlfeld mit den Namen, und die
+Uebertragungskarte zeigt "Datei → Max" statt nur den Code.
+
 **Einstellungen** — Relay-Adresse und -Passwort, Verschluesselungskurve,
 Standard-Zielordner, Pruefsummen-Verfahren, Upload-Drosselung, SOCKS5-Proxy.
 Wird sofort gespeichert, unter
@@ -63,12 +74,18 @@ Abbrechen-Knopf und aufklappbarem Protokoll.
 ## Zum Aufbau
 
 ```
-src/main/main.js       Fenster, Menue, IPC-Endpunkte
+src/main/main.js       Fenster, Menue, IPC-Endpunkte, Versionspruefung
 src/main/croc.js       croc finden, Kommandozeilen bauen, Ausgabe auswerten
 src/main/settings.js   Einstellungen laden und sichern
+src/main/words.js      Wortschatz und Wuerfel fuer feste Codes
 src/main/preload.js    Bruecke zum Renderer (contextIsolation ist aktiv)
+src/renderer/i18n.js   Sprachtabellen (en, de, fr) - auch vom Menue genutzt
 src/renderer/          Oberflaeche: index.html, styles.css, app.js
 ```
+
+Neue Sprache hinzufuegen: in `src/renderer/i18n.js` einen Eintrag in `LANGS`
+ergaenzen und die Tabelle darunter kopieren und uebersetzen. Fehlt ein
+Schluessel, faellt er automatisch auf Englisch zurueck.
 
 Zwei Details, die beim Bauen wichtig waren:
 
@@ -84,6 +101,26 @@ Die Fortschrittsanzeige entsteht durch Auswerten der croc-Ausgabe. Nach der
 Uebertragung haengt croc einen zweiten Balken (`Hashing ...`) fuer die
 Nachpruefung an — der wird getrennt behandelt und setzt den Fortschritt
 nicht zurueck.
+
+## Zu den Aktualisierungen
+
+Beim Start sieht CrocGUI bei GitHub nach, ob unter
+`thecrafti87/CrocGUI` eine neuere Fassung veroeffentlicht wurde. Wenn ja,
+erscheint oben ein Band mit einem Knopf zum Download. Abschaltbar unter
+*Einstellungen*.
+
+Es aktualisiert sich damit **nicht selbst**. Stilles Selbstaktualisieren
+setzt auf macOS eine mit einer Apple-Developer-ID signierte und notarisierte
+App voraus — Squirrel.Mac verweigert sonst das Einspielen. Sobald ein
+Signaturzertifikat vorliegt, laesst sich `electron-updater` ergaenzen; die
+Veroeffentlichung ueber `electron-builder --publish` ist in `package.json`
+bereits eingetragen.
+
+Fassungen veroeffentlichen:
+
+```bash
+npm version patch && npm run dist -- --publish always
+```
 
 ## Bewusst weggelassen
 

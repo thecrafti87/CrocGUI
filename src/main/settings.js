@@ -6,6 +6,8 @@ const path = require('path');
 const { app } = require('electron');
 
 const DEFAULTS = {
+  lang: 'en',
+  autoUpdate: true,
   // Leer bedeutet jeweils: croc entscheidet selbst / Standardwert von croc.
   crocPath: '',
   relay: '',
@@ -19,7 +21,9 @@ const DEFAULTS = {
   overwrite: false,
   noCompress: false,
   internalDns: false,
-  relayPorts: '9009,9010,9011,9012,9013'
+  relayPorts: '9009,9010,9011,9012,9013',
+  // [{ id, name, code, note }] - feste Codes je Gegenstelle
+  contacts: []
 };
 
 let cache = null;

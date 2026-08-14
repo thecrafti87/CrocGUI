@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "Desktop-Oberflaeche fuer croc - sicher Dateien zwischen Rechnern uebertragen",
   "main": "src/main/main.js",
-  "author": "CrocGUI",
+  "author": "thecrafti87",
   "license": "MIT",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thecrafti87/CrocGUI.git"
+  },
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --mac"
@@ -31,6 +35,13 @@
         "zip"
       ]
     },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "thecrafti87",
+        "repo": "CrocGUI"
+      }
+    ],
     "directories": {
       "output": "build"
     }
