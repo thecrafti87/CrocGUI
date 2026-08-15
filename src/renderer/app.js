@@ -20,7 +20,9 @@ const state = {
   settingsFile: '',
   crocInfo: null,
   update: null,
-  crocLatest: null
+  crocLatest: null,
+  history: [],
+  finder: false
 };
 
 /** Uebersetzt in der aktuell gewaehlten Sprache. */
@@ -85,6 +87,8 @@ function applyLang() {
   renderCredits();
   renderUpdate();
   renderCrocLatest();
+  renderHistory();
+  renderFinder();
   if (!$('#relayLog').dataset.fresh) $('#relayLog').textContent = T('relay.logEmpty');
   if (!editingId) $('#contactFoldTitle').textContent = T('contacts.new');
   gradeCode();
@@ -472,6 +476,8 @@ $('#sendStart').addEventListener('click', async () => {
     storeExpiration: $('#optStoreExp').value.trim()
   };
 
+  if (contact) opts.contactName = contact.name;
+
   if (sendMode === 'text') {
     const text = $('#sendText').value;
     if (!text.trim()) { toast(T('toast.noText'), 'bad'); return; }
@@ -521,20 +527,21 @@ $('#recvStart').addEventListener('click', async () => {
   const code = $('#recvCode').value.trim();
   if (!code) { toast(T('toast.noCode'), 'bad'); return; }
 
-  const clash = ($$('input[name="clash"]').find((r) => r.checked) || {}).value || 'ask';
+  const clash = ($$('input[name="clash"]').find((r) => r.checked) || {}).value || 'overwrite';
   const outDir = $('#recvOut').value || state.defaultOutDir;
 
+  const known = contactByCode(code);
   const res = await api.start('receive', {
     code,
     outDir,
     overwrite: clash === 'overwrite',
-    rename: clash === 'rename'
+    rename: clash === 'rename',
+    contactName: known ? known.name : null
   });
   if (!res.ok) { toast(res.message, 'bad'); return; }
 
   const job = ensureJob(res.id, 'receive');
   job.meta.outDir = outDir;
-  const known = contactByCode(code);
   if (known) job.meta.contactName = known.name;
   renderJobName(job);
   $('#recvCode').value = '';
@@ -772,7 +779,8 @@ const FIELDS = [
   ['#setNoCompress', 'noCompress', 'checked'],
   ['#setInternalDns', 'internalDns', 'checked'],
   ['#setAutoUpdate', 'autoUpdate', 'checked'],
-  ['#setNotify', 'notify', 'checked']
+  ['#setNotify', 'notify', 'checked'],
+  ['#setTray', 'tray', 'checked']
 ];
 
 function fillSettings(values) {
@@ -887,6 +895,116 @@ async function checkCrocLatest() {
 
 $('#binStatus').addEventListener('click', () => showView('settings'));
 
+/* ----------------------------- Verlauf ----------------------------- */
+
+function stamp(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const loc = { en: 'en-GB', de: 'de-DE', fr: 'fr-FR' }[state.lang] || 'en-GB';
+  return d.toLocaleString(loc, { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function renderHistory() {
+  const box = $('#histList');
+  box.textContent = '';
+
+  if (!state.history.length) {
+    box.append(el('div', 'empty', T('hist.empty')));
+    return;
+  }
+
+  state.history.forEach((h, i) => {
+    const row = el('article', 'log__row');
+    row.dataset.kind = h.kind;
+    row.style.animationDelay = `${Math.min(i, 10) * 20}ms`;
+
+    const mark = el('span', 'log__arrow', h.kind === 'send' ? '↑' : '↓');
+
+    const main = el('div', 'log__main');
+    main.append(el('div', 'log__name', h.label || (h.kind === 'send' ? T('job.text') : '—')));
+
+    const sub = el('div', 'log__sub');
+    const bits = [stamp(h.at)];
+    if (h.size) bits.push(h.size);
+    if (h.contact) bits.push(T(h.kind === 'send' ? 'hist.to' : 'hist.from', h.contact));
+    sub.append(el('span', null, bits.join('  ·  ')));
+    main.append(sub);
+
+    const stateKey = h.cancelled ? 'hist.cancelled' : h.ok
+      ? (h.kind === 'send' ? 'hist.sent' : 'hist.received')
+      : 'hist.failed';
+    const badge = el('span', 'log__state', T(stateKey));
+    badge.dataset.tone = h.cancelled ? 'off' : h.ok ? 'ok' : 'bad';
+
+    const acts = el('div', 'log__acts');
+    if (h.kind === 'send' && Array.isArray(h.paths) && h.paths.length) {
+      const again = el('button', 'btn btn--ghost btn--sm', T('hist.repeat'));
+      again.type = 'button';
+      if (h.pathsExist === false) {
+        again.disabled = true;
+        again.title = T('hist.gone');
+      }
+      again.addEventListener('click', async () => {
+        showView('send');
+        await addPaths(h.paths);
+        toast(T('toast.repeatAdded'), 'good');
+      });
+      acts.append(again);
+    }
+    if (h.kind === 'receive' && h.outDir) {
+      const open = el('button', 'btn btn--ghost btn--sm', T('hist.openFolder'));
+      open.type = 'button';
+      open.addEventListener('click', () => api.reveal(h.outDir));
+      acts.append(open);
+    }
+
+    row.append(mark, main, badge, acts);
+    box.append(row);
+  });
+}
+
+async function loadHistory() {
+  state.history = await api.listHistory();
+  renderHistory();
+}
+
+api.onHistory(() => loadHistory());
+
+$('#histClear').addEventListener('click', async () => {
+  state.history = await api.clearHistory();
+  renderHistory();
+  toast(T('toast.historyCleared'));
+});
+
+/* --------------------- Dateien aus dem Finder --------------------- */
+
+api.onFiles(async (paths) => {
+  showView('send');
+  await addPaths(paths);
+});
+
+/* ----------------------- Finder-Kurzbefehl ----------------------- */
+
+async function renderFinder() {
+  const status = await api.finderStatus();
+  state.finder = status.installed;
+  $('#finderToggle').textContent = T(status.installed ? 'finder.remove' : 'finder.install');
+  $('#finderNote').textContent = T(status.installed ? 'finder.ready' : 'finder.missing');
+  $('#finderNote').dataset.tone = status.installed ? 'good' : '';
+}
+
+$('#finderToggle').addEventListener('click', async () => {
+  if (state.finder) {
+    await api.finderRemove();
+    toast(T('toast.finderOff'));
+  } else {
+    const res = await api.finderInstall(T('finder.label'));
+    if (!res.ok) { toast(res.message, 'bad'); return; }
+    toast(T('toast.finderOn'), 'good');
+  }
+  renderFinder();
+});
+
 /* ----------------------------- Nennung ----------------------------- */
 
 // Freiwillige Unterstuetzung - dieselbe Adresse wie bei NetTracer. Der
@@ -964,6 +1082,7 @@ api.onMenu(async (action) => {
   $('#appVersion').textContent = `v${version}`;
 
   state.contacts = await api.listContacts();
+  state.history = await api.listHistory();
 
   buildLangPicker();
   applyLang();

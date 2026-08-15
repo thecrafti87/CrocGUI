@@ -5,17 +5,20 @@ const fs = require('fs');
 const https = require('https');
 const crypto = require('crypto');
 const {
-  app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, Notification, nativeImage
+  app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, Notification, nativeImage, Tray
 } = require('electron');
 const QRCode = require('qrcode');
 
 const settings = require('./settings');
 const words = require('./words');
 const { t, DEFAULT_LANG } = require('../renderer/i18n');
+const history = require('./history');
+const quickaction = require('./quickaction');
 const { detect, Runner } = require('./croc');
 
 let win = null;
 let runner = null;
+let tray = null;
 
 function createWindow() {
   win = new BrowserWindow({
@@ -151,6 +154,86 @@ function isNewer(a, b) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Dateien aus dem Finder
+ *
+ * "Oeffnen mit" und der Kurzbefehl schicken die Pfade einzeln als
+ * open-file. Sie kommen dicht hintereinander und moeglicherweise, bevor
+ * das Fenster steht - deshalb sammeln und gebuendelt weitergeben.
+ * ------------------------------------------------------------------ */
+
+let queued = [];
+let flushTimer = null;
+
+function flushQueued() {
+  if (!queued.length) return;
+  if (!win || win.isDestroyed() || win.webContents.isLoading()) return;
+  const paths = queued;
+  queued = [];
+  showWindow();
+  win.webContents.send('files:add', paths);
+}
+
+function queueFiles(paths) {
+  queued.push(...paths.filter(Boolean));
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(flushQueued, 250);
+}
+
+app.on('open-file', (event, filePath) => {
+  event.preventDefault();
+  queueFiles([filePath]);
+});
+
+function showWindow() {
+  if (!win || win.isDestroyed()) { createWindow(); return; }
+  if (win.isMinimized()) win.restore();
+  win.show();
+  win.focus();
+}
+
+/* ------------------------------------------------------------------ *
+ * Menueleiste
+ * ------------------------------------------------------------------ */
+
+function trayIconPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'crocTemplate.png')
+    : path.join(__dirname, '..', '..', 'assets', 'crocTemplate.png');
+}
+
+function buildTray() {
+  if (tray) return;
+  const image = nativeImage.createFromPath(trayIconPath());
+  if (image.isEmpty()) return;
+  image.setTemplateImage(true);
+
+  tray = new Tray(image);
+  tray.setToolTip('CrocGUI');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: tr('tray.show'), click: showWindow },
+    { type: 'separator' },
+    { label: tr('menu.sendFiles'), click: () => { showWindow(); win.webContents.send('menu:action', 'pick-files'); } },
+    { label: tr('menu.receiveCode'), click: () => { showWindow(); win.webContents.send('menu:action', 'goto-receive'); } },
+    { type: 'separator' },
+    { label: tr('menu.quit'), click: () => app.quit() }
+  ]));
+  tray.on('click', showWindow);
+  // Dateien lassen sich direkt auf das Symbol ziehen.
+  tray.on('drop-files', (_e, files) => queueFiles(files));
+}
+
+function destroyTray() {
+  if (!tray) return;
+  tray.destroy();
+  tray = null;
+}
+
+function syncTray() {
+  if (settings.load().tray) buildTray();
+  else destroyTray();
+}
+
+/* ------------------------------------------------------------------ *
  * Mitteilungen des Systems
  *
  * Nur wenn das Fenster nicht im Vordergrund ist - sonst steht dieselbe
@@ -193,7 +276,21 @@ function trackNotify(id, event) {
   if (event.type !== 'done') return;
 
   pending.delete(id);
-  if (info.kind === 'relay' || event.cancelled) return;
+  if (info.kind === 'relay') return;
+
+  history.add({
+    kind: info.kind,
+    label: info.label || null,
+    size: info.size || null,
+    contact: info.contactName || null,
+    outDir: info.outDir || null,
+    paths: info.paths || null,
+    ok: Boolean(event.ok),
+    cancelled: Boolean(event.cancelled)
+  });
+  if (win && !win.isDestroyed()) win.webContents.send('history:changed');
+
+  if (event.cancelled) return;
   if (!settings.load().notify) return;
   // Wer gerade zusieht, braucht keine Mitteilung.
   if (win && !win.isDestroyed() && win.isFocused()) return;
@@ -236,6 +333,9 @@ app.whenReady().then(() => {
 
   buildMenu();
   createWindow();
+  syncTray();
+
+  win.webContents.once('did-finish-load', () => flushQueued());
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -303,7 +403,31 @@ ipcMain.handle('croc:latest', async () => {
   }
 });
 
-ipcMain.handle('settings:set', (_e, patch) => settings.save(patch || {}));
+ipcMain.handle('settings:set', (_e, patch) => {
+  const values = settings.save(patch || {});
+  if (patch && 'tray' in patch) syncTray();
+  return values;
+});
+
+/* Verlauf */
+
+ipcMain.handle('history:list', () => history.withExistence(history.load()));
+ipcMain.handle('history:clear', () => history.clear());
+
+/* Finder-Kurzbefehl */
+
+ipcMain.handle('finder:status', () => ({
+  installed: quickaction.isInstalled(),
+  path: quickaction.servicePath()
+}));
+ipcMain.handle('finder:install', (_e, label) => {
+  try {
+    return { ok: true, path: quickaction.install(label || 'Mit CrocGUI senden', 'CrocGUI') };
+  } catch (err) {
+    return { ok: false, message: err.message };
+  }
+});
+ipcMain.handle('finder:remove', () => ({ ok: quickaction.remove() }));
 
 /* Kontakte - feste Codes je Gegenstelle */
 
@@ -375,7 +499,14 @@ ipcMain.handle('fs:stat', (_e, targets) => {
 
 ipcMain.handle('transfer:start', async (_e, { kind, opts }) => {
   try {
-    return { ok: true, ...(await runner.start(kind, opts)) };
+    const res = await runner.start(kind, opts);
+    // Das started-Ereignis kam schon durch, der Eintrag steht also bereit.
+    const info = pending.get(res.id);
+    if (info) {
+      info.paths = Array.isArray(opts.paths) ? opts.paths : null;
+      info.contactName = opts.contactName || null;
+    }
+    return { ok: true, ...res };
   } catch (err) {
     return { ok: false, message: err.message };
   }

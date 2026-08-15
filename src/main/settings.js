@@ -9,6 +9,7 @@ const DEFAULTS = {
   lang: 'en',
   autoUpdate: true,
   notify: true,
+  tray: true,
   // Leer bedeutet jeweils: croc entscheidet selbst / Standardwert von croc.
   crocPath: '',
   relay: '',

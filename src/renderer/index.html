@@ -50,6 +50,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8.5" r="2.8"/><path d="M3.6 18.4a4.9 4.9 0 0 1 9.8 0"/><path d="M16.5 7h4M16.5 11h4M16.5 15h2.6" class="thin"/></svg>
       <span data-i18n="nav.contacts">Contacts</span>
     </button>
+    <button class="rail__item" data-view="history" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3.2 2"/><path d="M3.6 12a8.4 8.4 0 1 0 2.6-6.1"/><path d="M3.4 4.4v4.2h4.2" class="thin"/></svg>
+      <span data-i18n="nav.history">History</span>
+    </button>
     <button class="rail__item" data-view="relay" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.4"/><path d="M7.5 7.5a6.4 6.4 0 0 0 0 9M16.5 7.5a6.4 6.4 0 0 1 0 9"/><path d="M4.4 4.4a10.7 10.7 0 0 0 0 15.2M19.6 4.4a10.7 10.7 0 0 1 0 15.2" class="thin"/></svg>
       <span data-i18n="nav.relay">Relay</span>
@@ -171,9 +175,9 @@
         </label>
         <div class="lbl lbl--switches">
           <span data-i18n="recv.clash"></span>
-          <label class="switch"><input type="radio" name="clash" value="ask" checked><i></i><span data-i18n="recv.clashAuto"></span></label>
-          <label class="switch"><input type="radio" name="clash" value="overwrite"><i></i><span data-i18n="recv.clashOverwrite"></span></label>
+          <label class="switch"><input type="radio" name="clash" value="overwrite" checked><i></i><span data-i18n="recv.clashOverwrite"></span></label>
           <label class="switch"><input type="radio" name="clash" value="rename"><i></i><span data-i18n="recv.clashRename"></span></label>
+          <p class="hint" data-i18n="recv.clashHint"></p>
         </div>
       </div>
 
@@ -222,6 +226,22 @@
       </details>
 
       <p class="note" data-i18n="contacts.warning"></p>
+    </section>
+
+    <!-- ============================ HISTORY =========================== -->
+    <section class="view" id="view-history">
+      <div class="ghost">LOG</div>
+      <div class="head">
+        <p class="kicker" data-i18n="hist.kicker"></p>
+        <h1 data-i18n="hist.title"></h1>
+        <p class="lede" data-i18n="hist.lede"></p>
+      </div>
+
+      <div class="act">
+        <button class="btn btn--ghost btn--sm" id="histClear" type="button" data-i18n="hist.clear"></button>
+      </div>
+
+      <div class="log" id="histList"></div>
     </section>
 
     <!-- ============================= RELAY ============================ -->
@@ -322,8 +342,17 @@
           <label class="switch"><input type="checkbox" id="setInternalDns"><i></i><span data-i18n="set.internalDns"></span></label>
           <label class="switch"><input type="checkbox" id="setAutoUpdate"><i></i><span data-i18n="set.autoUpdate"></span></label>
           <label class="switch"><input type="checkbox" id="setNotify"><i></i><span data-i18n="set.notify"></span></label>
+          <label class="switch"><input type="checkbox" id="setTray"><i></i><span data-i18n="set.tray"></span></label>
         </div>
       </div>
+
+      <label class="lbl lbl--wide" style="margin-top:20px">
+        <span data-i18n="set.finder"></span><em data-i18n="set.finderHint"></em>
+        <div class="row">
+          <button class="btn btn--ghost btn--sm" id="finderToggle" type="button"></button>
+        </div>
+        <p class="hint" id="finderNote"></p>
+      </label>
 
       <p class="note" id="settingsNote"></p>
       <p class="note note--tight" id="crocNote"></p>

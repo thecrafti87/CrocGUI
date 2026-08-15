@@ -70,6 +70,41 @@ app.whenReady().then(async () => {
   // Eine grosse PNG-Fassung fuer Fenster ausserhalb von macOS.
   fs.writeFileSync(path.join(ROOT, 'assets', 'icon.png'), full.toPNG());
 
+  // Menueleiste: schwarz auf durchsichtig. macOS faerbt "Template"-Bilder
+  // selbst um, hell auf dunkler Leiste und umgekehrt.
+  const trayPage = path.join(tmp, 'tray.html');
+  fs.writeFileSync(trayPage, `<!doctype html><meta charset="utf-8">
+    <style>html,body{margin:0;background:transparent;overflow:hidden}
+    svg{display:block;width:256px;height:256px}</style>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="256" height="256"
+         fill="none" stroke="#000" stroke-width="1.5"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2.6 11 Q2.8 6.4 6.8 6.4 Q9.6 6.4 10.4 9 L11 10.8 L20.8 11.3 Q22.8 11.4 22.8 13"/>
+      <path d="M22.8 13 L20.4 14.8 L18 13 L15.6 14.8 L13.2 13 L10.8 14.8 L8.4 13.2 L6.6 15"/>
+      <path d="M6.6 15 Q4 15.6 2.6 17.4"/>
+      <path d="M2.6 11 L2.6 17.4"/>
+      <circle cx="6.4" cy="9" r="1.15" fill="#000" stroke="none"/>
+    </svg>`, 'utf8');
+
+  const trayWin = new BrowserWindow({
+    width: 256, height: 256, show: false,
+    transparent: true, frame: false,
+    webPreferences: { offscreen: true }
+  });
+  await trayWin.loadFile(trayPage);
+  await new Promise((r) => setTimeout(r, 600));
+  const trayShot = await trayWin.webContents.capturePage();
+  const traySrc = path.join(tmp, 'tray.png');
+  fs.writeFileSync(traySrc, trayShot.toPNG());
+
+  // Das Krokodil ist breit - in der Leiste zaehlt die Hoehe, deshalb 18/36.
+  for (const [name, px] of [['crocTemplate.png', 18], ['crocTemplate@2x.png', 36]]) {
+    const out = path.join(ROOT, 'assets', name);
+    fs.copyFileSync(traySrc, out);
+    execFileSync('sips', ['-z', String(px), String(px), out], { stdio: 'ignore' });
+  }
+  console.log('assets/crocTemplate.png und @2x angelegt');
+
   const kb = (fs.statSync(ICNS).size / 1024).toFixed(0);
   console.log(`assets/icon.icns angelegt (${kb} KB) und assets/icon.png`);
 

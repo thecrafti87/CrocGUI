@@ -1,6 +1,6 @@
 {
   "name": "croc-gui",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Desktop-Oberflaeche fuer croc - sicher Dateien zwischen Rechnern uebertragen",
   "main": "src/main/main.js",
   "author": "thecrafti87",
@@ -41,8 +41,13 @@
         ]
       },
       {
-        "from": "assets/icon.png",
-        "to": "icon.png"
+        "from": "assets",
+        "to": ".",
+        "filter": [
+          "icon.png",
+          "crocTemplate.png",
+          "crocTemplate@2x.png"
+        ]
       }
     ],
     "mac": {
@@ -51,7 +56,20 @@
       "target": [
         "dmg"
       ],
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "extendInfo": {
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "Beliebige Datei",
+            "CFBundleTypeRole": "Viewer",
+            "LSItemContentTypes": [
+              "public.item",
+              "public.folder"
+            ],
+            "LSHandlerRank": "Alternate"
+          }
+        ]
+      }
     },
     "publish": [
       {

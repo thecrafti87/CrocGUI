@@ -12,6 +12,24 @@ contextBridge.exposeInMainWorld('croc', {
   checkUpdate: () => ipcRenderer.invoke('update:check'),
   crocLatest: () => ipcRenderer.invoke('croc:latest'),
 
+  listHistory: () => ipcRenderer.invoke('history:list'),
+  clearHistory: () => ipcRenderer.invoke('history:clear'),
+  onHistory: (fn) => {
+    const handler = () => fn();
+    ipcRenderer.on('history:changed', handler);
+    return () => ipcRenderer.removeListener('history:changed', handler);
+  },
+
+  finderStatus: () => ipcRenderer.invoke('finder:status'),
+  finderInstall: (label) => ipcRenderer.invoke('finder:install', label),
+  finderRemove: () => ipcRenderer.invoke('finder:remove'),
+
+  onFiles: (fn) => {
+    const handler = (_e, paths) => fn(paths);
+    ipcRenderer.on('files:add', handler);
+    return () => ipcRenderer.removeListener('files:add', handler);
+  },
+
   listContacts: () => ipcRenderer.invoke('contacts:list'),
   saveContact: (contact) => ipcRenderer.invoke('contacts:save', contact),
   removeContact: (id) => ipcRenderer.invoke('contacts:remove', id),
