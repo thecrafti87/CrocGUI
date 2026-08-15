@@ -20,6 +20,21 @@ const CANDIDATES = [
 
 let resolved = null;
 
+/**
+ * Das mit der App ausgelieferte croc. In der gebauten App liegt es neben
+ * den uebrigen Ressourcen, in der Entwicklung unter vendor/.
+ */
+function bundledPath() {
+  try {
+    const { app } = require('electron');
+    return app.isPackaged
+      ? path.join(process.resourcesPath, 'croc')
+      : path.join(app.getAppPath(), 'vendor', `darwin-${process.arch}`, 'croc');
+  } catch {
+    return null;
+  }
+}
+
 function versionOf(bin) {
   return new Promise((resolve) => {
     execFile(bin, ['--version'], { timeout: 5000 }, (err, stdout) => {
@@ -31,7 +46,10 @@ function versionOf(bin) {
 }
 
 /**
- * Sucht das croc-Binary: erst die Einstellung, dann PATH, dann die ueblichen Orte.
+ * Sucht das croc-Binary in dieser Reihenfolge: der in den Einstellungen
+ * eingetragene Pfad, das mitgelieferte croc, dann PATH und die ueblichen
+ * Installationsorte. Das mitgelieferte kommt vor dem des Systems, damit
+ * die Fassung vorhersagbar bleibt - wer ein eigenes will, traegt es ein.
  * Ergebnis wird gecacht, `force` erzwingt eine neue Suche.
  */
 async function detect(force = false) {
@@ -40,6 +58,9 @@ async function detect(force = false) {
   const tried = [];
   const configured = settings.load().crocPath;
   if (configured) tried.push(configured);
+
+  const bundled = bundledPath();
+  if (bundled) tried.push(bundled);
 
   // PATH durchsuchen - GUI-Apps auf macOS erben oft nur ein mageres PATH,
   // deshalb ergaenzen wir die ueblichen Installationsorte.
@@ -58,12 +79,12 @@ async function detect(force = false) {
     }
     const version = await versionOf(bin);
     if (version) {
-      resolved = { ok: true, path: bin, version };
+      resolved = { ok: true, path: bin, version, bundled: bin === bundled };
       return resolved;
     }
   }
 
-  resolved = { ok: false, path: null, version: null };
+  resolved = { ok: false, path: null, version: null, bundled: false };
   return resolved;
 }
 

@@ -19,7 +19,8 @@ const state = {
   defaultOutDir: '',
   settingsFile: '',
   crocInfo: null,
-  update: null
+  update: null,
+  crocLatest: null
 };
 
 /** Uebersetzt in der aktuell gewaehlten Sprache. */
@@ -83,6 +84,7 @@ function applyLang() {
   renderRelayState();
   renderCredits();
   renderUpdate();
+  renderCrocLatest();
   if (!$('#relayLog').dataset.fresh) $('#relayLog').textContent = T('relay.logEmpty');
   if (!editingId) $('#contactFoldTitle').textContent = T('contacts.new');
   gradeCode();
@@ -819,10 +821,15 @@ function renderCrocStatus() {
     return;
   }
   if (info.ok) {
+    const source = T(info.bundled ? 'set.crocBundled' : 'set.crocSystem');
     badge.dataset.state = 'ok';
     text.textContent = `croc ${info.version}`;
-    badge.title = info.path;
-    $('#settingsNote').textContent = T('set.found', info.path, info.version, state.settingsFile);
+    badge.title = `${info.path}\n${source}`;
+    $('#settingsNote').textContent = [
+      T('set.crocLine', info.version, source),
+      info.path,
+      T('set.settingsAt', state.settingsFile)
+    ].join('\n');
   } else {
     badge.dataset.state = 'bad';
     text.textContent = T('app.missing');
@@ -836,8 +843,45 @@ async function detectCroc(force = false) {
   renderCrocStatus();
   state.crocInfo = await api.detect(force);
   renderCrocStatus();
+  renderCrocLatest();
   if (!state.crocInfo.ok) toast(T('toast.crocMissing'), 'bad');
   return state.crocInfo;
+}
+
+/** Vergleicht das laufende croc mit der neuesten Veroeffentlichung. */
+function renderCrocLatest() {
+  const line = $('#crocNote');
+  const res = state.crocLatest;
+  const running = state.crocInfo && state.crocInfo.ok ? state.crocInfo.version : null;
+
+  line.dataset.tone = '';
+  if (!res) { line.textContent = ''; return; }
+  if (!res.ok) { line.textContent = T('croc.failed'); return; }
+  if (!res.latest || !running) { line.textContent = ''; return; }
+
+  if (isNewerVersion(res.latest, running)) {
+    line.textContent = T('croc.outdated', res.latest, running);
+    line.dataset.tone = 'warn';
+  } else {
+    line.textContent = T('croc.current', running);
+  }
+}
+
+/** Ist a groesser als b? Haupt-, Neben- und Fehlerstand der Reihe nach. */
+function isNewerVersion(a, b) {
+  const parse = (v) => String(v).replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0);
+  const pa = parse(a);
+  const pb = parse(b);
+  for (let i = 0; i < 3; i++) {
+    if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
+  }
+  return false;
+}
+
+async function checkCrocLatest() {
+  $('#crocNote').textContent = T('croc.checking');
+  state.crocLatest = await api.crocLatest();
+  renderCrocLatest();
 }
 
 $('#binStatus').addEventListener('click', () => showView('settings'));
@@ -915,5 +959,8 @@ api.onMenu(async (action) => {
   applyLang();
 
   await detectCroc(false);
-  if (values.autoUpdate) checkUpdate();
+  if (values.autoUpdate) {
+    checkUpdate();
+    checkCrocLatest();
+  }
 })();

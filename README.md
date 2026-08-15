@@ -13,24 +13,40 @@ als Balken statt als Zeichensalat im Terminal.
 Die Oberflaeche spricht **Englisch, Deutsch und Franzoesisch**; umgeschaltet
 wird oben rechts in der Titelleiste. Voreingestellt ist Englisch.
 
+## croc ist mit dabei
+
+Die gebaute App bringt croc mit — es muss nichts vorinstalliert sein. Das
+Binary liegt in `CrocGUI.app/Contents/Resources/croc`, und mit jeder neuen
+CrocGUI-Fassung kommt die darin eingefrorene croc-Fassung mit. Welche das
+ist, steht unter *Einstellungen*, zusammen mit einem Abgleich gegen die
+neueste croc-Veroeffentlichung.
+
+Die Suche laeuft in dieser Reihenfolge:
+
+1. der unter *Einstellungen* eingetragene Pfad
+2. das mitgelieferte croc
+3. `PATH` und die ueblichen Orte (`/opt/homebrew/bin`, `/usr/local/bin`,
+   `~/go/bin`, `~/.local/bin`)
+
+Das mitgelieferte kommt bewusst vor dem des Systems: so ist die Fassung
+vorhersagbar. Wer sein eigenes croc will, traegt den Pfad ein.
+
 ## Voraussetzungen
 
-- macOS mit installiertem `croc` (getestet mit 11.1.0)
-- Node.js 20 oder neuer
-
-```bash
-brew install croc
-```
-
-Findet CrocGUI das Programm nicht selbst, laesst sich der Pfad unter
-*Einstellungen* eintragen.
+- macOS (arm64 oder x64)
+- Node.js 20 oder neuer, nur zum Bauen
 
 ## Starten
 
 ```bash
 npm install
+npm run fetch-croc
 npm start
 ```
+
+`fetch-croc` laedt die croc-Binaries fuer beide Architekturen nach
+`vendor/`. Ohne diesen Schritt greift CrocGUI in der Entwicklung auf ein
+croc aus dem System zurueck, sofern eines da ist.
 
 Eine verteilbare App bauen:
 
@@ -38,7 +54,16 @@ Eine verteilbare App bauen:
 npm run dist
 ```
 
-Das Ergebnis landet in `build/`.
+Das Ergebnis landet in `build/`. Die Binaries werden vorher automatisch
+geholt (`predist`), festgelegt ueber das Feld `crocVersion` in der
+`package.json`. Auf eine neuere croc-Fassung wechseln:
+
+```bash
+npm run fetch-croc:latest
+```
+
+Das traegt die neue Fassung gleich in die `package.json` ein. `vendor/`
+gehoert nicht ins Repository.
 
 ## Was die Oberflaeche kann
 
@@ -74,6 +99,7 @@ Abbrechen-Knopf und aufklappbarem Protokoll.
 ## Zum Aufbau
 
 ```
+scripts/fetch-croc.js  croc-Binaries holen und nach vendor/ legen
 src/main/main.js       Fenster, Menue, IPC-Endpunkte, Versionspruefung
 src/main/croc.js       croc finden, Kommandozeilen bauen, Ausgabe auswerten
 src/main/settings.js   Einstellungen laden und sichern
@@ -109,7 +135,13 @@ Beim Start sieht CrocGUI bei GitHub nach, ob unter
 erscheint oben ein Band mit einem Knopf zum Download. Abschaltbar unter
 *Einstellungen*.
 
-Es aktualisiert sich damit **nicht selbst**. Stilles Selbstaktualisieren
+Weil croc mitgeliefert wird, aktualisiert eine neue CrocGUI-Fassung auch
+croc gleich mit. Unabhaengig davon gleicht die App die laufende
+croc-Fassung mit der neuesten Veroeffentlichung ab und schreibt das
+Ergebnis unter *Einstellungen* — ist croc dort weiter, weisst du, dass sich
+ein neuer Build lohnt.
+
+CrocGUI aktualisiert sich **nicht selbst**. Stilles Selbstaktualisieren
 setzt auf macOS eine mit einer Apple-Developer-ID signierte und notarisierte
 App voraus — Squirrel.Mac verweigert sonst das Einspielen. Sobald ein
 Signaturzertifikat vorliegt, laesst sich `electron-updater` ergaenzen; die

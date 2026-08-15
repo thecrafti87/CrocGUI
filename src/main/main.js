@@ -214,6 +214,21 @@ ipcMain.handle('update:check', async () => {
   }
 });
 
+/** Welche croc-Fassung ist bei schollz/croc zuletzt erschienen? */
+ipcMain.handle('croc:latest', async () => {
+  try {
+    const release = await fetchJson('https://api.github.com/repos/schollz/croc/releases/latest');
+    if (!release || !release.tag_name) return { ok: true, latest: null };
+    return {
+      ok: true,
+      latest: String(release.tag_name).replace(/^v/, ''),
+      url: release.html_url || 'https://github.com/schollz/croc/releases/latest'
+    };
+  } catch {
+    return { ok: false, latest: null };
+  }
+});
+
 ipcMain.handle('settings:set', (_e, patch) => settings.save(patch || {}));
 
 /* Kontakte - feste Codes je Gegenstelle */

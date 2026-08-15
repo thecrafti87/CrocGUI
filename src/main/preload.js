@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('croc', {
 
   setLang: (code) => ipcRenderer.invoke('lang:set', code),
   checkUpdate: () => ipcRenderer.invoke('update:check'),
+  crocLatest: () => ipcRenderer.invoke('croc:latest'),
 
   listContacts: () => ipcRenderer.invoke('contacts:list'),
   saveContact: (contact) => ipcRenderer.invoke('contacts:save', contact),

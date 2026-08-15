@@ -12,6 +12,9 @@
   },
   "scripts": {
     "start": "electron .",
+    "fetch-croc": "node scripts/fetch-croc.js",
+    "fetch-croc:latest": "node scripts/fetch-croc.js --latest",
+    "predist": "node scripts/fetch-croc.js",
     "dist": "electron-builder --mac"
   },
   "dependencies": {
@@ -27,6 +30,16 @@
     "files": [
       "src/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "vendor/darwin-${arch}",
+        "to": ".",
+        "filter": [
+          "croc",
+          "VERSION"
+        ]
+      }
     ],
     "mac": {
       "category": "public.app-category.utilities",
@@ -45,5 +58,6 @@
     "directories": {
       "output": "build"
     }
-  }
+  },
+  "crocVersion": "11.1.0"
 }

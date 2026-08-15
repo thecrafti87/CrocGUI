@@ -1219,6 +1219,13 @@ select.field {
    Hinweise und Meldungen
    ---------------------------------------------------------------- */
 
+.note--tight {
+  margin-top: 0 !important;
+  padding-top: 6px !important;
+  border-top: 0 !important;
+}
+.note--tight[data-tone='warn'] { color: var(--amber); }
+
 .note {
   margin-top: 26px;
   padding-top: 18px;
