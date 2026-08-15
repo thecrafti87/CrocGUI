@@ -136,6 +136,9 @@ body::after {
 }
 
 .chrome__brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
   font-family: var(--mono);
   font-size: 12px;
   font-weight: 700;
@@ -143,6 +146,19 @@ body::after {
   text-transform: uppercase;
   color: var(--bone);
 }
+
+.chrome__croc {
+  flex: none;
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: var(--lime);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px rgba(198, 242, 78, .35));
+}
+.chrome__croc .eye { fill: var(--lime); stroke: none; }
 .chrome__brand em {
   font-style: normal;
   color: var(--lime);
@@ -234,6 +250,15 @@ body::after {
   font-size: 10px;
   color: var(--haze-d);
 }
+.credits__support {
+  margin: 16px 0 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: rgba(198, 242, 78, .04);
+}
+.credits__support .credits__law { margin-top: 9px; max-width: 62ch; }
+
 .credits__law {
   margin-top: 10px;
   font-family: var(--mono);

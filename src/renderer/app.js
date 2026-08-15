@@ -888,13 +888,20 @@ $('#binStatus').addEventListener('click', () => showView('settings'));
 
 /* ----------------------------- Nennung ----------------------------- */
 
+// Freiwillige Unterstuetzung - dieselbe Adresse wie bei NetTracer. Der
+// Knopf verweist nur nach aussen: in der App wird keine Zahlung
+// abgewickelt und dadurch nichts freigeschaltet.
+const SUPPORT_URL = 'https://buymeacoffee.com/bezi';
+
 function renderCredits() {
   $('#creditMade').textContent = T('credit.made');
   $('#creditCroc').textContent = T('credit.croc');
+  $('#creditSupport').textContent = T('credit.support');
 }
 
 $('#creditMade').addEventListener('click', () => api.openExternal('https://github.com/thecrafti87'));
 $('#creditCroc').addEventListener('click', () => api.openExternal('https://github.com/schollz/croc'));
+$('#creditSupport').addEventListener('click', () => api.openExternal(SUPPORT_URL));
 
 /* -------------------------- Aktualisierung -------------------------- */
 

@@ -207,6 +207,8 @@ const I18N = {
     'update.failed': 'Update check did not work out.',
     'credit.made': 'CrocGUI by thecrafti87',
     'credit.croc': 'croc by Zack Scholl',
+    'credit.support': 'Support the project',
+    'credit.supportNote': 'CrocGUI is free and stays fully usable — with or without support. The button only opens your browser; no payment is handled inside the app, and nothing is unlocked by it.',
     'credit.license': 'Both under the MIT licence.',
 
     'menu.about': 'About CrocGUI',
@@ -424,6 +426,8 @@ const I18N = {
     'update.failed': 'Die Suche nach Aktualisierungen hat nicht geklappt.',
     'credit.made': 'CrocGUI von thecrafti87',
     'credit.croc': 'croc von Zack Scholl',
+    'credit.support': 'Projekt unterstützen',
+    'credit.supportNote': 'CrocGUI ist kostenlos und bleibt vollständig nutzbar — auch ohne Unterstützung. Der Knopf öffnet nur den Browser; in der App wird keine Zahlung abgewickelt, und es wird dadurch nichts freigeschaltet.',
     'credit.license': 'Beides unter der MIT-Lizenz.',
 
     'menu.about': 'Über CrocGUI',
@@ -641,6 +645,8 @@ const I18N = {
     'update.failed': 'La recherche de mises à jour n’a pas abouti.',
     'credit.made': 'CrocGUI par thecrafti87',
     'credit.croc': 'croc par Zack Scholl',
+    'credit.support': 'Soutenir le projet',
+    'credit.supportNote': 'CrocGUI est gratuit et reste pleinement utilisable — avec ou sans soutien. Le bouton ouvre seulement votre navigateur ; aucun paiement n’est traité dans l’application et rien n’y est déverrouillé.',
     'credit.license': 'Les deux sous licence MIT.',
 
     'menu.about': 'À propos de CrocGUI',

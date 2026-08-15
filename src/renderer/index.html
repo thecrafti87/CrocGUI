@@ -10,7 +10,17 @@
 <body>
 
 <header class="chrome">
-  <div class="chrome__brand">croc<em>gui</em><span class="chrome__by">by thecrafti87</span></div>
+  <div class="chrome__brand">
+    <svg class="chrome__croc" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2.6 11 Q2.8 6.4 6.8 6.4 Q9.6 6.4 10.4 9 L11 10.8 L20.8 11.3 Q22.8 11.4 22.8 13"/>
+      <path d="M22.8 13 L20.4 14.8 L18 13 L15.6 14.8 L13.2 13 L10.8 14.8 L8.4 13.2 L6.6 15"/>
+      <path d="M6.6 15 Q4 15.6 2.6 17.4"/>
+      <path d="M2.6 11 L2.6 17.4"/>
+      <circle class="eye" cx="6.4" cy="9" r="1.15"/>
+    </svg>
+    <span>croc<em>gui</em></span>
+    <span class="chrome__by">by thecrafti87</span>
+  </div>
   <div class="chrome__right">
     <div class="seg seg--lang" id="langPick"></div>
     <div class="chrome__status" id="binStatus" data-state="pending">
@@ -324,6 +334,12 @@
         </div>
         <p><button class="linky" id="creditMade" type="button"></button></p>
         <p><button class="linky" id="creditCroc" type="button"></button></p>
+
+        <div class="credits__support">
+          <button class="btn btn--ghost btn--sm" id="creditSupport" type="button"></button>
+          <p class="credits__law" data-i18n="credit.supportNote"></p>
+        </div>
+
         <p class="credits__law" data-i18n="credit.license"></p>
         <p class="credits__law" id="updateLine"></p>
       </footer>
