@@ -8,6 +8,7 @@ const { app } = require('electron');
 const DEFAULTS = {
   lang: 'en',
   autoUpdate: true,
+  notify: true,
   // Leer bedeutet jeweils: croc entscheidet selbst / Standardwert von croc.
   crocPath: '',
   relay: '',

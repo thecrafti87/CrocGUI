@@ -333,7 +333,12 @@ class Runner {
       this.emit(id, { type: 'done', ok });
     });
 
-    this.emit(id, { type: 'started', kind, command: `croc ${args.join(' ')}` });
+    this.emit(id, {
+      type: 'started',
+      kind,
+      command: `croc ${args.join(' ')}`,
+      outDir: opts.outDir || null
+    });
     return { id, kind, code: job.code };
   }
 

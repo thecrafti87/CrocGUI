@@ -771,7 +771,8 @@ const FIELDS = [
   ['#setSocks5', 'socks5', 'value'],
   ['#setNoCompress', 'noCompress', 'checked'],
   ['#setInternalDns', 'internalDns', 'checked'],
-  ['#setAutoUpdate', 'autoUpdate', 'checked']
+  ['#setAutoUpdate', 'autoUpdate', 'checked'],
+  ['#setNotify', 'notify', 'checked']
 ];
 
 function fillSettings(values) {
@@ -941,6 +942,8 @@ api.onMenu(async (action) => {
   if (action === 'pick-files') {
     showView('send');
     addPaths(await api.pickFiles());
+  } else if (action === 'goto-send') {
+    showView('send');
   } else if (action === 'goto-receive') {
     showView('receive');
     $('#recvCode').focus();

@@ -4,7 +4,9 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const crypto = require('crypto');
-const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu } = require('electron');
+const {
+  app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, Notification, nativeImage
+} = require('electron');
 const QRCode = require('qrcode');
 
 const settings = require('./settings');
@@ -148,16 +150,88 @@ function isNewer(a, b) {
   return false;
 }
 
+/* ------------------------------------------------------------------ *
+ * Mitteilungen des Systems
+ *
+ * Nur wenn das Fenster nicht im Vordergrund ist - sonst steht dieselbe
+ * Meldung ohnehin schon in der App.
+ * ------------------------------------------------------------------ */
+
+const pending = new Map(); // Vorgangs-Kennung -> { kind, label, size, outDir }
+
+function tr(key, ...args) {
+  return t(settings.load().lang || DEFAULT_LANG, key, ...args);
+}
+
+function notify(title, body, view, folder) {
+  if (!Notification.isSupported()) return;
+  const note = new Notification({ title, body });
+  note.on('click', () => {
+    if (!win || win.isDestroyed()) return;
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+    if (view) win.webContents.send('menu:action', view);
+    if (folder) shell.openPath(folder);
+  });
+  note.show();
+}
+
+function trackNotify(id, event) {
+  if (event.type === 'started') {
+    pending.set(id, { kind: event.kind, outDir: event.outDir });
+    return;
+  }
+  const info = pending.get(id);
+  if (!info) return;
+
+  if (event.type === 'meta') {
+    info.label = event.label;
+    info.size = event.size;
+    return;
+  }
+  if (event.type !== 'done') return;
+
+  pending.delete(id);
+  if (info.kind === 'relay' || event.cancelled) return;
+  if (!settings.load().notify) return;
+  // Wer gerade zusieht, braucht keine Mitteilung.
+  if (win && !win.isDestroyed() && win.isFocused()) return;
+
+  const what = info.label
+    ? `${info.label}${info.size ? ` · ${info.size}` : ''}`
+    : tr(info.kind === 'send' ? 'notify.someFiles' : 'notify.someIncoming');
+
+  if (!event.ok) {
+    notify(tr('notify.failedTitle'), what, info.kind === 'send' ? 'goto-send' : 'goto-receive');
+  } else if (info.kind === 'send') {
+    notify(tr('notify.sentTitle'), what, 'goto-send');
+  } else {
+    notify(tr('notify.receivedTitle'), what, 'goto-receive', info.outDir || null);
+  }
+}
+
 app.whenReady().then(() => {
   runner = new Runner((id, event) => {
     if (win && !win.isDestroyed()) win.webContents.send('transfer:event', { id, event });
+    trackNotify(id, event);
   });
+
+  // In der gebauten App kommt das Symbol aus dem Paket. Beim Start aus der
+  // Entwicklung laeuft Electrons eigenes Binary - dann setzen wir es selbst,
+  // damit im Dock nicht das Electron-Symbol steht.
+  const iconFile = app.isPackaged
+    ? path.join(process.resourcesPath, 'icon.png')
+    : path.join(__dirname, '..', '..', 'assets', 'icon.png');
+  const icon = nativeImage.createFromPath(iconFile);
+  if (!app.isPackaged && !icon.isEmpty() && app.dock) app.dock.setIcon(icon);
 
   app.setAboutPanelOptions({
     applicationName: 'CrocGUI',
     applicationVersion: app.getVersion(),
     credits: 'CrocGUI by thecrafti87\ncroc by Zack Scholl',
-    copyright: 'MIT'
+    copyright: 'MIT',
+    ...(fs.existsSync(iconFile) ? { iconPath: iconFile } : {})
   });
 
   buildMenu();
