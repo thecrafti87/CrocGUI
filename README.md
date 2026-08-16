@@ -214,6 +214,12 @@ kam eine heil an, eine mit richtiger Groesse und 3,1 MB Nullen darin, die
 dritte gar nicht. Die Pruefung meldet genau das - eine in Ordnung, eine
 falsch, eine fehlt.
 
+Bei *Unter neuem Namen sichern* legt croc die neue Fassung als
+"name (1).ext" neben den kaputten Rest. Die Pruefung sucht solche
+Ausweichnamen mit ab und meldet dann "unter anderem Namen" statt
+faelschlich "falsch" - nachgestellt: der kaputte Torso bleibt liegen,
+die heile Fassung daneben wird als solche erkannt.
+
 Laeuft auf der Gegenseite kein CrocGUI, fehlt die Liste einfach - dann
 steht dort "keine Pruefsummen dabei", und sonst passiert nichts.
 Abschaltbar unter *Einstellungen*. Beim Zippen entfaellt die Liste, weil

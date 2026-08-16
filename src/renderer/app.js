@@ -923,6 +923,10 @@ api.onManifestResult(({ id, result }) => {
   if (!result.found) {
     line.textContent = T('sum.none');
     line.dataset.tone = 'off';
+  } else if (result.ok && (result.renamed || []).length) {
+    line.textContent = T('sum.renamed', result.good, result.total, result.renamed.length);
+    line.dataset.tone = 'ok';
+    line.title = result.renamed.map((r) => `${r.expected} → ${r.actual}`).join('\n');
   } else if (result.ok) {
     line.textContent = T('sum.allGood', result.total);
     line.dataset.tone = 'ok';

@@ -91,6 +91,40 @@ async function build(paths, version, onProgress) {
   };
 }
 
+const escapeRe = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * "Unter neuem Namen sichern" legt die Datei als "name (1).ext" ab. Wer
+ * nur den erwarteten Namen prueft, meldet den kaputten Rest als Fehler
+ * und uebersieht die heile Fassung daneben.
+ */
+function variantsOf(dir, rel) {
+  const folder = path.join(dir, path.dirname(rel));
+  const base = path.basename(rel);
+  const ext = path.extname(base);
+  const stem = base.slice(0, base.length - ext.length);
+  const re = new RegExp(`^${escapeRe(stem)} \\((\\d+)\\)${escapeRe(ext)}$`);
+  try {
+    return fs.readdirSync(folder).filter((n) => re.test(n)).map((n) => path.join(folder, n));
+  } catch {
+    return [];
+  }
+}
+
+/** Liegt die Datei unter einem Ausweichnamen heil da? */
+async function findRenamed(dir, entry) {
+  for (const cand of variantsOf(dir, entry.name)) {
+    try {
+      if (fs.statSync(cand).size !== entry.size) continue;
+    } catch {
+      continue;
+    }
+    const sum = await hashFile(cand, () => {});
+    if (sum === entry.sha256) return path.relative(dir, cand);
+  }
+  return null;
+}
+
 /**
  * Sucht die Liste im Zielordner und rechnet nach. Ohne Liste gibt es
  * nichts zu pruefen - dann hat die Gegenstelle kein CrocGUI benutzt.
@@ -111,6 +145,7 @@ async function verify(dir, onProgress) {
 
   const missing = [];
   const broken = [];
+  const renamed = [];
   let good = 0;
 
   for (const entry of list) {
@@ -141,6 +176,21 @@ async function verify(dir, onProgress) {
     else broken.push(entry.name);
   }
 
+  // Was fehlt oder kaputt ist, kann unter einem Ausweichnamen heil daliegen.
+  const entryByName = (name) => list.find((e) => e.name === name);
+
+  for (const bucket of [broken, missing]) {
+    for (let i = bucket.length - 1; i >= 0; i--) {
+      const entry = entryByName(bucket[i]);
+      if (!entry) continue;
+      const other = await findRenamed(dir, entry);
+      if (!other) continue;
+      renamed.push({ expected: entry.name, actual: other });
+      bucket.splice(i, 1);
+      good++;
+    }
+  }
+
   onProgress({ phase: 'verify', done: total, total });
   try { fs.unlinkSync(file); } catch { /* egal */ }
 
@@ -150,6 +200,7 @@ async function verify(dir, onProgress) {
     good,
     broken,
     missing,
+    renamed,
     ok: broken.length === 0 && missing.length === 0
   };
 }
