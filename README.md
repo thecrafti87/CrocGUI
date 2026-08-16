@@ -204,6 +204,16 @@ ohne Inhalt bescheinigt so einem Torso Fehlerfreiheit. Nachgestellt: eine
 zur Haelfte genullte Datei mit stimmender Groesse wird als falsch erkannt,
 eine fehlende als fehlend.
 
+Die Liste geht als erste Datei mit, nicht als letzte. Am Ende waere sie
+bei einem Abbruch das Erste, was fehlt - also genau dann nicht da, wenn
+man sie braucht. Und nachgerechnet wird auch nach einem Abbruch oder
+Fehlschlag, nicht nur nach einer geglueckten Uebertragung.
+
+An einer echt abgebrochenen Uebertragung nachgestellt: von drei Dateien
+kam eine heil an, eine mit richtiger Groesse und 3,1 MB Nullen darin, die
+dritte gar nicht. Die Pruefung meldet genau das - eine in Ordnung, eine
+falsch, eine fehlt.
+
 Laeuft auf der Gegenseite kein CrocGUI, fehlt die Liste einfach - dann
 steht dort "keine Pruefsummen dabei", und sonst passiert nichts.
 Abschaltbar unter *Einstellungen*. Beim Zippen entfaellt die Liste, weil

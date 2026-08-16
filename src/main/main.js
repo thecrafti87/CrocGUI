@@ -314,7 +314,9 @@ function trackNotify(id, event) {
 
   if (info.kind === 'relay') return;
 
-  if (info.kind === 'receive' && event.ok && info.outDir && settings.load().checksums) {
+  // Bewusst auch nach Abbruch oder Fehlschlag: gerade dann will man
+  // wissen, was tatsaechlich heil auf der Platte liegt.
+  if (info.kind === 'receive' && info.outDir && settings.load().checksums) {
     verifyReceived(id, info.outDir);
   }
 
@@ -575,7 +577,9 @@ ipcMain.handle('transfer:start', async (_e, { kind, opts }) => {
     if (wantSheet) {
       sendProgress({ phase: 'build', done: 0, total: 1 });
       sheet = await manifest.build(opts.paths, app.getVersion(), sendProgress);
-      opts = { ...opts, paths: [...opts.paths, sheet.file] };
+      // Zuerst, nicht zuletzt: bei einem Abbruch ist sie sonst das
+      // Erste, was fehlt - und damit unbrauchbar.
+      opts = { ...opts, paths: [sheet.file, ...opts.paths] };
       sendProgress({ phase: 'done' });
     }
 
