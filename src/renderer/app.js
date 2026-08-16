@@ -22,7 +22,8 @@ const state = {
   update: null,
   crocLatest: null,
   history: [],
-  finder: false
+  finder: false,
+  diag: null
 };
 
 /** Uebersetzt in der aktuell gewaehlten Sprache. */
@@ -89,6 +90,7 @@ function applyLang() {
   renderCrocLatest();
   renderHistory();
   renderFinder();
+  renderDiag();
   if (!$('#relayLog').dataset.fresh) $('#relayLog').textContent = T('relay.logEmpty');
   if (!editingId) $('#contactFoldTitle').textContent = T('contacts.new');
   gradeCode();
@@ -108,6 +110,8 @@ function showView(name) {
   $$('.rail__item').forEach((b) => b.classList.toggle('is-active', b.dataset.view === name));
   $$('.view').forEach((v) => v.classList.toggle('is-active', v.id === `view-${name}`));
   $('#stage').scrollTop = 0;
+  // Beim ersten Blick in die Einstellungen einmal von selbst durchpruefen.
+  if (name === 'settings' && !state.diag) runDiag();
 }
 
 $('#rail').addEventListener('click', (e) => {
@@ -894,6 +898,95 @@ async function checkCrocLatest() {
 }
 
 $('#binStatus').addEventListener('click', () => showView('settings'));
+
+/* ---------------------------- Selbsttest ---------------------------- */
+
+function diagRow(label, value, tone, buttons) {
+  const row = el('div', 'diag__row');
+  row.dataset.tone = tone;
+  row.append(el('span', 'diag__dot'));
+  row.append(el('span', 'diag__label', label));
+  row.append(el('span', 'diag__value', value));
+  if (buttons && buttons.length) {
+    const acts = el('div', 'diag__acts');
+    buttons.forEach((b) => acts.append(b));
+    row.append(acts);
+  }
+  return row;
+}
+
+function paneButton(key, pane) {
+  const b = el('button', 'btn btn--ghost btn--sm', T(key));
+  b.type = 'button';
+  b.addEventListener('click', () => api.openPane(pane));
+  return b;
+}
+
+function renderDiag() {
+  const box = $('#diagList');
+  box.textContent = '';
+  const d = state.diag;
+  if (!d) return;
+
+  let bad = 0;
+  const push = (row, ok) => { if (!ok) bad++; box.append(row); };
+
+  // croc
+  push(diagRow(T('diag.croc'),
+    d.croc.ok
+      ? T(d.croc.bundled ? 'diag.crocBundled' : 'diag.crocSystem', d.croc.version)
+      : T('diag.crocMissing'),
+    d.croc.ok ? 'ok' : 'bad'), d.croc.ok);
+
+  // Zielordner
+  push(diagRow(T('diag.outDir'),
+    d.outDir.ok ? T('diag.outDirOk', d.outDir.path) : T('diag.outDirBad', d.outDir.message || ''),
+    d.outDir.ok ? 'ok' : 'bad',
+    d.outDir.ok ? [] : [paneButton('diag.paneFiles', 'files')]), d.outDir.ok);
+
+  // Platz
+  push(diagRow(T('diag.space'),
+    d.space.unknown ? T('diag.spaceUnknown')
+      : T(d.space.ok ? 'diag.spaceOk' : 'diag.spaceLow', d.space.freeText),
+    d.space.unknown ? 'off' : d.space.ok ? 'ok' : 'warn'), d.space.unknown || d.space.ok);
+
+  // Relay
+  const relayWhat = T(d.relay.custom ? 'diag.relayCustom' : 'diag.relayDefault');
+  push(diagRow(`${T('diag.relay')} · ${relayWhat}`,
+    d.relay.ok ? T('diag.relayOk', d.relay.target, d.relay.ms)
+      : T('diag.relayBad', d.relay.target, d.relay.message || ''),
+    d.relay.ok ? 'ok' : 'bad'), d.relay.ok);
+
+  // Mitteilungen - macOS gibt den Zustand nicht preis, also ehrlich bleiben
+  const test = el('button', 'btn btn--ghost btn--sm', T('diag.testNote'));
+  test.type = 'button';
+  test.addEventListener('click', () => api.testNotification());
+  box.append(diagRow(T('diag.notify'), T('diag.notifyUnknown'), 'off',
+    [test, paneButton('diag.paneNotify', 'notifications')]));
+
+  // Finder
+  box.append(diagRow(T('diag.finder'),
+    T(d.finder.ok ? 'diag.finderOk' : 'diag.finderNo'),
+    d.finder.ok ? 'ok' : 'off',
+    d.finder.ok ? [] : [paneButton('diag.paneServices', 'services')]));
+
+  const sum = el('p', 'diag__sum', bad
+    ? T('diag.someBad', bad, 4)
+    : T('diag.allGood'));
+  sum.dataset.tone = bad ? 'bad' : 'ok';
+  box.append(sum);
+}
+
+async function runDiag() {
+  $('#diagRun').disabled = true;
+  $('#diagList').textContent = '';
+  $('#diagList').append(el('p', 'diag__sum', T('diag.running')));
+  state.diag = await api.runDiagnose();
+  renderDiag();
+  $('#diagRun').disabled = false;
+}
+
+$('#diagRun').addEventListener('click', runDiag);
 
 /* ----------------------------- Verlauf ----------------------------- */
 

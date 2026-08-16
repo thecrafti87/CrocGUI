@@ -14,6 +14,7 @@ const words = require('./words');
 const { t, DEFAULT_LANG } = require('../renderer/i18n');
 const history = require('./history');
 const quickaction = require('./quickaction');
+const diagnose = require('./diagnose');
 const { detect, Runner } = require('./croc');
 
 let win = null;
@@ -413,6 +414,30 @@ ipcMain.handle('settings:set', (_e, patch) => {
 
 ipcMain.handle('history:list', () => history.withExistence(history.load()));
 ipcMain.handle('history:clear', () => history.clear());
+
+/* Selbsttest */
+
+ipcMain.handle('diag:run', () => diagnose.run());
+
+ipcMain.handle('diag:testNote', () => {
+  if (!Notification.isSupported()) return { ok: false };
+  notify(tr('diag.testTitle'), tr('diag.testBody'));
+  return { ok: true };
+});
+
+// Nur die Systemeinstellungen, sonst nichts.
+const PANES = {
+  notifications: 'x-apple.systempreferences:com.apple.preference.notifications',
+  files: 'x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders',
+  services: 'x-apple.systempreferences:com.apple.preference.keyboard?Shortcuts'
+};
+
+ipcMain.handle('system:pane', (_e, which) => {
+  const url = PANES[which];
+  if (!url) return false;
+  shell.openExternal(url);
+  return true;
+});
 
 /* Finder-Kurzbefehl */
 

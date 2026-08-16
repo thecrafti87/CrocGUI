@@ -20,6 +20,10 @@ contextBridge.exposeInMainWorld('croc', {
     return () => ipcRenderer.removeListener('history:changed', handler);
   },
 
+  runDiagnose: () => ipcRenderer.invoke('diag:run'),
+  testNotification: () => ipcRenderer.invoke('diag:testNote'),
+  openPane: (which) => ipcRenderer.invoke('system:pane', which),
+
   finderStatus: () => ipcRenderer.invoke('finder:status'),
   finderInstall: (label) => ipcRenderer.invoke('finder:install', label),
   finderRemove: () => ipcRenderer.invoke('finder:remove'),

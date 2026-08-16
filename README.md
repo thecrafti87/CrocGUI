@@ -88,6 +88,18 @@ aus kryptografisch sicherem Zufall (sechs Woerter, rund 50 Bit). In *Senden*
 und *Empfangen* erscheint dann ein Auswahlfeld mit den Namen, und die
 Uebertragungskarte zeigt "Datei → Max" statt nur den Code.
 
+**Verlauf** — Jede Uebertragung mit Zeit, Groesse und Gegenstelle.
+Sendungen lassen sich mit einem Klick wiederholen, bei Empfaengen fuehrt
+ein Knopf in den Zielordner. Codes werden bewusst nicht aufbewahrt.
+
+**Menueleiste** — Ein Krokodil oben rechts. Dateien lassen sich direkt
+darauf ziehen, ohne das Fenster zu oeffnen. Abschaltbar.
+
+**Aus dem Finder** — Rechtsklick auf Dateien, *Oeffnen mit* → CrocGUI,
+und sie landen in der Sendeliste. Wer es kuerzer will, richtet unter
+*Einstellungen* den Finder-Kurzbefehl ein; der steht dann als eigener
+Eintrag unter *Kurzbefehle* im Kontextmenue.
+
 **Einstellungen** — Relay-Adresse und -Passwort, Verschluesselungskurve,
 Standard-Zielordner, Pruefsummen-Verfahren, Upload-Drosselung, SOCKS5-Proxy.
 Wird sofort gespeichert, unter
@@ -128,6 +140,30 @@ Uebertragung haengt croc einen zweiten Balken (`Hashing ...`) fuer die
 Nachpruefung an — der wird getrennt behandelt und setzt den Fortschritt
 nicht zurueck.
 
+## Selbsttest
+
+Unter *Einstellungen* steht oben ein Selbsttest, der beim ersten Blick
+dorthin von selbst durchlaeuft. Er prueft nur, was sich wirklich pruefen
+laesst: ob croc da ist, ob sich in den Zielordner schreiben laesst
+(echter Schreibversuch), wie viel Platz frei ist, ob das Relay antwortet
+(echte Verbindung samt Laufzeit) und ob der Finder-Kurzbefehl liegt.
+
+Ob Mitteilungen erlaubt sind, verraet macOS einer App nicht. Statt etwas
+zu behaupten, steht dort ein Knopf, der eine echte Testmitteilung
+schickt - kommt sie an, ist alles gut. Daneben Knuepfe, die direkt die
+passende Seite der Systemeinstellungen oeffnen.
+
+## Nach der Installation
+
+Einzurichten ist nichts: croc ist dabei, ein Relay ist voreingestellt,
+der Zielordner ist "Downloads".
+
+Die einzige Huerde ist der erste Start. Weil die App nicht signiert ist,
+verweigert macOS sie zunaechst: Rechtsklick auf die App, dann *Oeffnen*,
+im Dialog nochmal *Oeffnen*. Danach nie wieder. Die App kann sich das
+nicht selbst erlauben - genau davon lebt der Schutz. Nur eine
+Apple-Developer-ID nimmt diese Huerde weg.
+
 ## Zu den Aktualisierungen
 
 Beim Start sieht CrocGUI bei GitHub nach, ob unter
@@ -154,7 +190,32 @@ Fassungen veroeffentlichen:
 npm version patch && npm run dist -- --publish always
 ```
 
+## Warum beim Empfangen ueberschrieben wird
+
+croc legt die Zieldatei sofort in voller Groesse an. Bricht eine
+Uebertragung ab, bleibt eine Datei mit der richtigen Groesse liegen, in
+der der fehlende Teil aus Nullen besteht. Startet man denselben Code
+erneut, haelt croc diesen Torso fuer vollstaendig: der Sender uebertraegt
+nichts mehr, croc endet mit 0 - und niemand erfaehrt, dass ein Loch in
+der Datei klafft.
+
+Zweimal nachgestellt, einmal mit hartem Abschuss des Empfaengers, einmal
+mit SIGINT: 8 bzw. 13 MB Nullen bei gemeldetem Erfolg. Mit `--overwrite`
+wird sauber neu uebertragen und die Datei stimmt.
+
+Deshalb ist *Ueberschreiben* die Voreinstellung, und die frueher
+vorhandene Moeglichkeit, ohne Ueberschreiben zu empfangen, gibt es nicht
+mehr. Wer die vorhandene Datei behalten will, waehlt *Unter neuem Namen
+sichern* - auch das ueberttraegt vollstaendig neu.
+
 ## Bewusst weggelassen
+
+Ein "auf jemanden warten", das eine Mitteilung ausloest, sobald die
+Gegenstelle sendet, ist mit croc nicht moeglich. Der Sender muss zuerst
+im Raum sein; ein wartender Empfaenger belegt ihn und laesst genau die
+Uebertragung scheitern, auf die er wartet ("could not secure channel").
+Nachgestellt mit zwei croc-Prozessen ohne die App - es liegt an croc,
+nicht an der Oberflaeche.
 
 Die globale Option `--local` taucht in der Oberflaeche nicht auf. Sie laesst
 die empfangende Seite ohne zusaetzliche `--ip`-Angabe ins Leere laufen
