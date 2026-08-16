@@ -784,7 +784,8 @@ const FIELDS = [
   ['#setInternalDns', 'internalDns', 'checked'],
   ['#setAutoUpdate', 'autoUpdate', 'checked'],
   ['#setNotify', 'notify', 'checked'],
-  ['#setTray', 'tray', 'checked']
+  ['#setTray', 'tray', 'checked'],
+  ['#setChecksums', 'checksums', 'checked']
 ];
 
 function fillSettings(values) {
@@ -899,6 +900,43 @@ async function checkCrocLatest() {
 
 $('#binStatus').addEventListener('click', () => showView('settings'));
 
+/* ---------------------------- Pruefsummen ---------------------------- */
+
+function sumLine(text) {
+  const node = $('#sumLine');
+  node.textContent = text || '';
+  node.classList.toggle('is-on', Boolean(text));
+}
+
+api.onManifest(({ phase, done, total }) => {
+  if (phase === 'done') { sumLine(''); return; }
+  const pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+  sumLine(T(phase === 'build' ? 'sum.building' : 'sum.verifying', pct));
+});
+
+api.onManifestResult(({ id, result }) => {
+  const job = state.jobs.get(id);
+  if (!job) return;
+  const line = job.check || el('div', 'job__check');
+  job.check = line;
+
+  if (!result.found) {
+    line.textContent = T('sum.none');
+    line.dataset.tone = 'off';
+  } else if (result.ok) {
+    line.textContent = T('sum.allGood', result.total);
+    line.dataset.tone = 'ok';
+  } else {
+    line.textContent = T('sum.bad', result.good, result.total,
+      result.broken.length, result.missing.length);
+    line.dataset.tone = 'bad';
+    if (result.broken.length || result.missing.length) {
+      line.title = [...result.broken, ...result.missing].join('\n');
+    }
+  }
+  if (!line.isConnected) job.el.append(line);
+});
+
 /* ---------------------------- Selbsttest ---------------------------- */
 
 function diagRow(label, value, tone, buttons) {
@@ -1011,7 +1049,8 @@ function renderHistory() {
     row.dataset.kind = h.kind;
     row.style.animationDelay = `${Math.min(i, 10) * 20}ms`;
 
-    const mark = el('span', 'log__arrow', h.kind === 'send' ? '↑' : '↓');
+    const mark = el('span', 'log__arrow',
+      h.kind === 'check' ? '✓' : h.kind === 'send' ? '↑' : '↓');
 
     const main = el('div', 'log__main');
     main.append(el('div', 'log__name', h.label || (h.kind === 'send' ? T('job.text') : '—')));
@@ -1023,7 +1062,14 @@ function renderHistory() {
     sub.append(el('span', null, bits.join('  ·  ')));
     main.append(sub);
 
-    const stateKey = h.cancelled ? 'hist.cancelled' : h.ok
+    if (h.kind === 'check') {
+      main.firstChild.textContent = h.ok
+        ? T('hist.checkOk', h.checked)
+        : T('hist.checkBad', h.good, h.checked,
+            (h.broken || []).length, (h.missing || []).length);
+    }
+
+    const stateKey = h.kind === 'check' ? 'hist.check' : h.cancelled ? 'hist.cancelled' : h.ok
       ? (h.kind === 'send' ? 'hist.sent' : 'hist.received')
       : 'hist.failed';
     const badge = el('span', 'log__state', T(stateKey));

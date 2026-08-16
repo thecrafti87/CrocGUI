@@ -190,6 +190,25 @@ Fassungen veroeffentlichen:
 npm version patch && npm run dist -- --publish always
 ```
 
+## Pruefsummen
+
+Beim Senden legt die App eine Liste mit SHA-256 je Datei bei
+(`crocgui-manifest.json`). Der Empfaenger rechnet sie ueber das nach, was
+tatsaechlich auf seiner Platte liegt, zeigt das Ergebnis an der
+Uebertragungskarte und im Verlauf, und loescht die Liste danach wieder.
+
+Warum nicht einfach Groesse und Datum vergleichen: eine abgebrochene
+croc-Uebertragung hinterlaesst eine Datei in exakt richtiger Groesse mit
+frischem Datum, in der der fehlende Teil aus Nullen besteht. Jede Pruefung
+ohne Inhalt bescheinigt so einem Torso Fehlerfreiheit. Nachgestellt: eine
+zur Haelfte genullte Datei mit stimmender Groesse wird als falsch erkannt,
+eine fehlende als fehlend.
+
+Laeuft auf der Gegenseite kein CrocGUI, fehlt die Liste einfach - dann
+steht dort "keine Pruefsummen dabei", und sonst passiert nichts.
+Abschaltbar unter *Einstellungen*. Beim Zippen entfaellt die Liste, weil
+ein Archiv sich beim Oeffnen selbst prueft.
+
 ## Warum beim Empfangen ueberschrieben wird
 
 croc legt die Zieldatei sofort in voller Groesse an. Bricht eine

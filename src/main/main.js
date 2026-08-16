@@ -15,6 +15,7 @@ const { t, DEFAULT_LANG } = require('../renderer/i18n');
 const history = require('./history');
 const quickaction = require('./quickaction');
 const diagnose = require('./diagnose');
+const manifest = require('./manifest');
 const { detect, Runner } = require('./croc');
 
 let win = null;
@@ -242,6 +243,7 @@ function syncTray() {
  * ------------------------------------------------------------------ */
 
 const pending = new Map(); // Vorgangs-Kennung -> { kind, label, size, outDir }
+const sheets = new Map();  // Vorgangs-Kennung -> aufzuraeumende Pruefsummenliste
 
 function tr(key, ...args) {
   return t(settings.load().lang || DEFAULT_LANG, key, ...args);
@@ -261,6 +263,35 @@ function notify(title, body, view, folder) {
   note.show();
 }
 
+function sendProgress(payload) {
+  if (win && !win.isDestroyed()) win.webContents.send('manifest:progress', payload);
+}
+
+/** Rechnet die beigelegten Pruefsummen ueber die empfangenen Dateien nach. */
+async function verifyReceived(id, dir) {
+  let result;
+  try {
+    result = await manifest.verify(dir, sendProgress);
+  } catch (err) {
+    result = { found: false, error: err.message };
+  }
+  sendProgress({ phase: 'done' });
+  if (win && !win.isDestroyed()) win.webContents.send('manifest:result', { id, result });
+  if (result.found) {
+    history.add({
+      kind: 'check',
+      label: null,
+      ok: result.ok,
+      checked: result.total,
+      good: result.good,
+      broken: result.broken,
+      missing: result.missing,
+      outDir: dir
+    });
+    if (win && !win.isDestroyed()) win.webContents.send('history:changed');
+  }
+}
+
 function trackNotify(id, event) {
   if (event.type === 'started') {
     pending.set(id, { kind: event.kind, outDir: event.outDir });
@@ -277,7 +308,15 @@ function trackNotify(id, event) {
   if (event.type !== 'done') return;
 
   pending.delete(id);
+
+  const sheet = sheets.get(id);
+  if (sheet) { sheet.cleanup(); sheets.delete(id); }
+
   if (info.kind === 'relay') return;
+
+  if (info.kind === 'receive' && event.ok && info.outDir && settings.load().checksums) {
+    verifyReceived(id, info.outDir);
+  }
 
   history.add({
     kind: info.kind,
@@ -524,7 +563,24 @@ ipcMain.handle('fs:stat', (_e, targets) => {
 
 ipcMain.handle('transfer:start', async (_e, { kind, opts }) => {
   try {
+    let sheet = null;
+    // Zippen packt Ordner um - dann passen die Namen in der Liste nicht
+    // mehr, und das Archiv prueft sich ohnehin selbst.
+    const wantSheet = kind === 'send'
+      && settings.load().checksums
+      && opts.mode !== 'text'
+      && !opts.zip
+      && Array.isArray(opts.paths) && opts.paths.length;
+
+    if (wantSheet) {
+      sendProgress({ phase: 'build', done: 0, total: 1 });
+      sheet = await manifest.build(opts.paths, app.getVersion(), sendProgress);
+      opts = { ...opts, paths: [...opts.paths, sheet.file] };
+      sendProgress({ phase: 'done' });
+    }
+
     const res = await runner.start(kind, opts);
+    if (sheet) sheets.set(res.id, sheet);
     // Das started-Ereignis kam schon durch, der Eintrag steht also bereit.
     const info = pending.get(res.id);
     if (info) {

@@ -20,6 +20,17 @@ contextBridge.exposeInMainWorld('croc', {
     return () => ipcRenderer.removeListener('history:changed', handler);
   },
 
+  onManifest: (fn) => {
+    const handler = (_e, payload) => fn(payload);
+    ipcRenderer.on('manifest:progress', handler);
+    return () => ipcRenderer.removeListener('manifest:progress', handler);
+  },
+  onManifestResult: (fn) => {
+    const handler = (_e, payload) => fn(payload);
+    ipcRenderer.on('manifest:result', handler);
+    return () => ipcRenderer.removeListener('manifest:result', handler);
+  },
+
   runDiagnose: () => ipcRenderer.invoke('diag:run'),
   testNotification: () => ipcRenderer.invoke('diag:testNote'),
   openPane: (which) => ipcRenderer.invoke('system:pane', which),
