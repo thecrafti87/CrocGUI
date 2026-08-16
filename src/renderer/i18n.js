@@ -59,6 +59,11 @@ const I18N = {
     'send.clear': 'Clear selection',
     'send.folder': 'Folder',
 
+    'text.received': 'Received text',
+    'text.copy': 'Copy text',
+    'text.copied': 'Text is in the clipboard.',
+    'send.textWarn': 'A sent text is briefly visible in the process list of this computer — croc takes it as an argument. For a secret, send a file instead.',
+
     'recv.kicker': '02 · incoming',
     'recv.title': 'Receive',
     'recv.lede': 'Type in the code from the other machine. The words are the key — they never leave this computer in the clear.',
@@ -357,6 +362,11 @@ const I18N = {
     'send.clear': 'Auswahl leeren',
     'send.folder': 'Ordner',
 
+    'text.received': 'Empfangener Text',
+    'text.copy': 'Text kopieren',
+    'text.copied': 'Text in der Zwischenablage.',
+    'send.textWarn': 'Ein gesendeter Text ist kurzzeitig in der Prozessliste dieses Rechners sichtbar — croc nimmt ihn als Argument entgegen. Für ein Geheimnis lieber eine Datei senden.',
+
     'recv.kicker': '02 · eingehend',
     'recv.title': 'Empfangen',
     'recv.lede': 'Den Code vom anderen Rechner eintippen. Die Wörter sind der Schlüssel — sie verlassen diesen Rechner nie im Klartext.',
@@ -654,6 +664,11 @@ const I18N = {
     'send.start': 'Démarrer le transfert',
     'send.clear': 'Vider la sélection',
     'send.folder': 'Dossier',
+
+    'text.received': 'Texte reçu',
+    'text.copy': 'Copier le texte',
+    'text.copied': 'Texte copié dans le presse-papiers.',
+    'send.textWarn': 'Un texte envoyé est brièvement visible dans la liste des processus de cet ordinateur — croc le reçoit en argument. Pour un secret, envoyez plutôt un fichier.',
 
     'recv.kicker': '02 · entrant',
     'recv.title': 'Recevoir',

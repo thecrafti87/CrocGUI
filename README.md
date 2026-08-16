@@ -75,6 +75,13 @@ QR-Code. Pro Uebertragung einstellbar: eigener Code, Ordner vorher zippen,
 `.gitignore` beachten, Dateien ausschliessen, verschluesselte Zwischenlagerung
 beim Anbieter (fuer den Fall, dass die Gegenstelle gerade nicht online ist).
 
+**Text** — Statt Dateien laesst sich auch reiner Text senden. Der kommt
+beim Empfaenger nicht als Datei an, sondern wird angezeigt: die
+Uebertragungskarte zeigt ihn samt Knopf zum Kopieren. Ein Hinweis unter
+dem Textfeld sagt, dass croc den Text als Argument entgegennimmt - er ist
+darum kurzzeitig in der Prozessliste des sendenden Rechners sichtbar.
+Fuer ein Geheimnis also lieber eine Datei.
+
 **Empfangen** — Code eintippen oder einfuegen, Zielordner waehlen, fertig.
 Bei Namenskonflikten wahlweise ueberschreiben oder unter neuem Namen sichern.
 

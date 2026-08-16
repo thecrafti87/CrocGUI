@@ -426,6 +426,27 @@ function handleEvent(id, event) {
       setJobState(job, 'verifying', event.percent);
       break;
 
+    case 'text': {
+      // Text kommt nicht als Datei an - ohne diese Anzeige stuende er nur
+      // im Protokoll.
+      const box = el('div', 'job__text');
+      box.append(el('div', 'job__textLabel', T('text.received')));
+      box.append(el('pre', null, event.text));
+      const copy = el('button', 'btn btn--sm btn--ghost', T('text.copy'));
+      copy.type = 'button';
+      copy.addEventListener('click', async () => {
+        await api.copy(event.text);
+        toast(T('text.copied'), 'good');
+      });
+      box.append(copy);
+      // Ueber das Protokoll, nicht darunter - das ist der Inhalt, nicht die Fussnote.
+      job.el.insertBefore(box, job.logSummary.parentElement);
+      job.isText = true;
+      job.meta.label = T('job.text');
+      renderJobName(job);
+      break;
+    }
+
     case 'failure':
       job.err.hidden = false;
       job.err.textContent = event.message;
@@ -443,7 +464,8 @@ function handleEvent(id, event) {
         job.eta.textContent = '';
         job.err.hidden = true;
         if (job.beacon) job.beacon.remove();
-        if (job.kind === 'receive' && job.meta.outDir) {
+        // Bei Text wurde nichts gespeichert - ein Ordnerknopf ginge ins Leere.
+        if (job.kind === 'receive' && job.meta.outDir && !job.isText) {
           const open = el('button', 'btn btn--sm btn--ghost', T('job.openFolder'));
           open.type = 'button';
           open.addEventListener('click', () => api.reveal(job.meta.outDir));

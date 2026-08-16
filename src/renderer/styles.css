@@ -1460,3 +1460,32 @@ select.field {
 .job__check[data-tone='bad'] { border-left-color: var(--coral); color: #ffb3aa; }
 
 .log__row[data-kind='check'] .log__arrow { color: var(--jade); }
+
+.job__text {
+  margin-top: 12px;
+  padding: 13px 15px;
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r-sm);
+  background: var(--ink-900);
+}
+.job__textLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--jade);
+  margin-bottom: 8px;
+}
+.job__text pre {
+  margin-bottom: 11px;
+  max-height: 220px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--bone);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}

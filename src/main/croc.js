@@ -120,6 +120,10 @@ const RE_PERCENT = /(\d{1,3})%/;
 const RE_DETAIL = /\(([^()]*?[\d.]+\s*\/\s*[\d.]+[^()]*)\)/;
 const RE_ETA = /\[([^\]]+)\]/;
 const RE_ERROR = /^\s*(?:error|Error|panic):?\s*(.+)$/;
+// Text kommt nicht als Datei an, sondern wird ausgegeben - wir fangen ihn
+// auf, damit er nicht nur im Protokoll steht.
+const RE_TEXT_START = /Receiving text message/;
+const RE_NOISE = /^(?:connecting|securing|Receiving \(|Sending \()/;
 
 /**
  * Wandelt eine Statuszeile in ein Ereignis um, oder gibt null zurueck,
@@ -298,6 +302,9 @@ class Runner {
         if (job.lastLines.length > 40) job.lastLines.shift();
 
         this.emit(id, { type: 'log', line });
+
+        if (RE_TEXT_START.test(line)) { job.textLines = []; continue; }
+        if (job.textLines && !RE_NOISE.test(line)) { job.textLines.push(line); continue; }
         const evt = parseLine(line);
         if (!evt) continue;
         if (evt.type === 'code') job.code = evt.code;
@@ -321,6 +328,9 @@ class Runner {
       if (job.cancelled) {
         this.emit(id, { type: 'done', ok: false, cancelled: true });
         return;
+      }
+      if (job.textLines && job.textLines.length) {
+        this.emit(id, { type: 'text', text: job.textLines.join('\n') });
       }
       const ok = codeNum === 0 && !signal;
       if (!ok) {
