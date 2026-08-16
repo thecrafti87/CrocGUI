@@ -222,8 +222,10 @@ die heile Fassung daneben wird als solche erkannt.
 
 Laeuft auf der Gegenseite kein CrocGUI, fehlt die Liste einfach - dann
 steht dort "keine Pruefsummen dabei", und sonst passiert nichts.
-Abschaltbar unter *Einstellungen*. Beim Zippen entfaellt die Liste, weil
-ein Archiv sich beim Oeffnen selbst prueft.
+Abschaltbar unter *Einstellungen*. Die Liste geht auch beim Zippen mit:
+croc packt nur fuer den Transport und entpackt beim Empfaenger wieder, die
+Namen stimmen also weiterhin. Ein Archiv, das die Uebertragung gar nicht
+ueberlebt, koennte ohnehin nichts pruefen.
 
 ## Warum beim Empfangen ueberschrieben wird
 

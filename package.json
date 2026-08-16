@@ -1,6 +1,6 @@
 {
   "name": "croc-gui",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Desktop-Oberflaeche fuer croc - sicher Dateien zwischen Rechnern uebertragen",
   "main": "src/main/main.js",
   "author": "thecrafti87",

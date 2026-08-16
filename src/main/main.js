@@ -566,12 +566,12 @@ ipcMain.handle('fs:stat', (_e, targets) => {
 ipcMain.handle('transfer:start', async (_e, { kind, opts }) => {
   try {
     let sheet = null;
-    // Zippen packt Ordner um - dann passen die Namen in der Liste nicht
-    // mehr, und das Archiv prueft sich ohnehin selbst.
+    // Auch beim Zippen: croc entpackt beim Empfaenger wieder, die Namen
+    // stimmen also weiterhin - und ein Archiv, das die Uebertragung nicht
+    // ueberlebt, kann nichts pruefen.
     const wantSheet = kind === 'send'
       && settings.load().checksums
       && opts.mode !== 'text'
-      && !opts.zip
       && Array.isArray(opts.paths) && opts.paths.length;
 
     if (wantSheet) {
