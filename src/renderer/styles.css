@@ -1759,3 +1759,167 @@ select.field {
 }
 .reach__row[data-kind='vpn'] .reach__addr { color: var(--jade); }
 .reach__what { flex: 1; font-size: 12px; color: var(--haze-d); }
+
+/* ---------------------------- Warteschlange ----------------------------
+   Was noch aussteht, gehoert vor die laufenden Karten - sonst sucht man
+   es unter den Vorgaengen.
+   -------------------------------------------------------------------- */
+
+.queue {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--ink-800);
+}
+
+.queue__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.queue__title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--haze-d);
+}
+
+.queue__list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+
+.queue__item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: var(--r-sm);
+  background: var(--ink-750);
+}
+
+.queue__pos {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--lime-d);
+  white-space: nowrap;
+}
+
+.queue__name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--bone);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue__kill {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink-600);
+  color: var(--haze);
+  cursor: pointer;
+  line-height: 1;
+  flex: none;
+}
+
+.queue__kill:hover { background: var(--coral); color: var(--ink-900); }
+
+/* ---------------------------- Nachlieferung ---------------------------- */
+
+.resend {
+  margin-top: 16px;
+  padding: 12px 15px;
+  border: 1px solid var(--lime-d);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--lime) 7%, var(--ink-800));
+}
+
+.resend__head { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+
+.resend__badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--lime);
+  color: var(--ink-900);
+}
+
+.resend__what { flex: 1; font-size: 13px; color: var(--bone); }
+
+/* Nachforderung an der Pruefsummenzeile */
+
+.job__checkActs {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+  padding-left: 12px;
+}
+
+.job__checkAsk {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .03em;
+  color: #ffb3aa;
+}
+
+.job__checkActs .hint { flex-basis: 100%; margin: 0; }
+
+/* Zielordner auf der Kontaktkarte */
+
+.card__where {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 11px;
+  color: var(--haze-d);
+  overflow: hidden;
+}
+
+.card__where span:last-child {
+  font-family: var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__whereLabel {
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-size: 9px;
+  flex: none;
+}
+
+/* Nachforderung im Nachrichtenfenster */
+
+.bubble--req { border: 1px solid var(--lime-d); }
+
+.bubble__req {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: var(--lime);
+  margin-bottom: 7px;
+}
+
+.bubble__files {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--haze);
+  max-height: 8.5em;
+  overflow: auto;
+  margin-bottom: 8px;
+  white-space: pre;
+}

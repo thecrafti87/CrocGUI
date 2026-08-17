@@ -168,6 +168,91 @@ test('unter neuem Namen gesichert gilt als angekommen', async (t) => {
   });
 });
 
+test('die Liste bleibt liegen, solange etwas aussteht', async (t) => {
+  // Sie ist der einzige Beleg, was noch fehlt - und sie sortiert die
+  // Nachlieferung spaeter wieder ein. Wer sie nach dem ersten Fehlschlag
+  // wegwirft, kann beides nicht mehr.
+  const dir = tempdir(t);
+  const quelle = path.join(dir, 'quelle', 'daten');
+  schreibe(path.join(quelle, 'a.txt'), 'A');
+  schreibe(path.join(quelle, 'b.txt'), 'B');
+
+  const ziel = path.join(dir, 'ziel');
+  await listeNach(quelle, ziel);
+  schreibe(path.join(ziel, 'daten', 'a.txt'), 'A');
+
+  const ergebnis = await manifest.verify(ziel, still);
+  assert.equal(ergebnis.ok, false);
+  assert.equal(fs.existsSync(path.join(ziel, manifest.NAME)), true);
+});
+
+test('eine Nachlieferung wird wieder an ihren Platz gelegt', async (t) => {
+  // croc flacht ab: wer "daten/unter/b.txt" nachschickt, bei dem kommt
+  // "b.txt" oben im Zielordner an. Nachgemessen, nicht vermutet.
+  const dir = tempdir(t);
+  const quelle = path.join(dir, 'quelle', 'daten');
+  schreibe(path.join(quelle, 'a.txt'), 'A');
+  schreibe(path.join(quelle, 'unter', 'b.txt'), 'Inhalt B');
+
+  const ziel = path.join(dir, 'ziel');
+  await listeNach(quelle, ziel);
+  schreibe(path.join(ziel, 'daten', 'a.txt'), 'A');
+
+  const erst = await manifest.verify(ziel, still);
+  assert.deepEqual(erst.missing, ['daten/unter/b.txt']);
+
+  // Die Nachlieferung kommt flach herein.
+  schreibe(path.join(ziel, 'b.txt'), 'Inhalt B');
+
+  const zweit = await manifest.verify(ziel, still);
+  assert.equal(zweit.ok, true);
+  assert.deepEqual(zweit.restored, ['daten/unter/b.txt']);
+  assert.equal(fs.readFileSync(path.join(ziel, 'daten', 'unter', 'b.txt'), 'utf8'), 'Inhalt B');
+  assert.equal(fs.existsSync(path.join(ziel, 'b.txt')), false, 'die flache Fassung blieb liegen');
+
+  await t.test('und die Liste raeumt sich jetzt weg', () => {
+    assert.equal(fs.existsSync(path.join(ziel, manifest.NAME)), false);
+  });
+});
+
+test('eine Nachlieferung mit falschem Inhalt wird nicht einsortiert', async (t) => {
+  // Nur bei genauer Uebereinstimmung - sonst waere es Raten, und eine
+  // falsche Datei landete unter dem richtigen Namen.
+  const dir = tempdir(t);
+  const quelle = path.join(dir, 'quelle', 'daten');
+  schreibe(path.join(quelle, 'unter', 'b.txt'), 'Inhalt B');
+
+  const ziel = path.join(dir, 'ziel');
+  await listeNach(quelle, ziel);
+  schreibe(path.join(ziel, 'b.txt'), 'etwas ganz anderes');
+
+  const ergebnis = await manifest.verify(ziel, still);
+  assert.equal(ergebnis.ok, false);
+  assert.deepEqual(ergebnis.restored, []);
+  assert.deepEqual(ergebnis.missing, ['daten/unter/b.txt']);
+  assert.equal(fs.existsSync(path.join(ziel, 'b.txt')), true, 'fremde Datei wurde angefasst');
+});
+
+test('eine Datei, die ohnehin oben liegt, wird nicht auf sich selbst geschoben', async (t) => {
+  const dir = tempdir(t);
+  const quelle = path.join(dir, 'quelle');
+  schreibe(path.join(quelle, 'oben.txt'), 'O');
+
+  const ziel = path.join(dir, 'ziel');
+  const gebaut = await manifest.build([path.join(quelle, 'oben.txt')], '1.0.0-test', still);
+  fs.mkdirSync(ziel, { recursive: true });
+  fs.copyFileSync(gebaut.file, path.join(ziel, manifest.NAME));
+  gebaut.cleanup();
+
+  // Kaputt angekommen: gleiche Groesse, anderer Inhalt.
+  schreibe(path.join(ziel, 'oben.txt'), 'X');
+
+  const ergebnis = await manifest.verify(ziel, still);
+  assert.equal(ergebnis.ok, false);
+  assert.deepEqual(ergebnis.broken, ['oben.txt']);
+  assert.deepEqual(ergebnis.restored, []);
+});
+
 test('ohne Liste gibt es nichts zu pruefen', async (t) => {
   // Dann hat die Gegenstelle kein CrocGUI benutzt. Das ist kein Fehler.
   const dir = tempdir(t);

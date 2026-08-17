@@ -148,10 +148,28 @@
         </div>
       </details>
 
+      <div class="resend" id="resendBox" hidden>
+        <div class="resend__head">
+          <span class="resend__badge" data-i18n="resend.badge"></span>
+          <span class="resend__what" id="resendWhat"></span>
+          <button class="btn btn--ghost btn--sm" id="resendClear" type="button" data-i18n="resend.clear"></button>
+        </div>
+        <p class="hint" id="resendGone"></p>
+      </div>
+
       <div class="act">
         <button class="btn btn--go" id="sendStart" type="button" data-i18n="send.start"></button>
         <button class="btn btn--ghost" id="sendClear" type="button" data-i18n="send.clear"></button>
+        <button class="btn btn--ghost" id="resendPaste" type="button" data-i18n="resend.paste" data-i18n-title="resend.hint"></button>
         <span class="sumline" id="sumLine"></span>
+      </div>
+
+      <div class="queue" id="queueBox" hidden>
+        <div class="queue__head">
+          <span class="queue__title" data-i18n="queue.title"></span>
+          <button class="btn btn--ghost btn--sm" id="queueClear" type="button" data-i18n="queue.clear"></button>
+        </div>
+        <ul class="queue__list" id="queueList"></ul>
       </div>
 
       <div id="sendJobs" class="jobs"></div>
@@ -224,6 +242,15 @@
           <label class="lbl">
             <span data-i18n="contacts.note"></span><em data-i18n="contacts.optional"></em>
             <input class="field" id="contactNote" type="text" data-i18n-ph="contacts.notePlaceholder" spellcheck="false">
+          </label>
+          <label class="lbl lbl--wide">
+            <span data-i18n="contacts.outDir"></span><em data-i18n="contacts.optional"></em>
+            <div class="row">
+              <input class="field" id="contactOut" type="text" data-i18n-ph="contacts.outDirPlaceholder" spellcheck="false" readonly>
+              <button class="btn btn--ghost btn--sm" id="contactOutPick" type="button" data-i18n="contacts.outDirPick"></button>
+              <button class="btn btn--ghost btn--sm" id="contactOutClear" type="button" data-i18n="contacts.outDirClear"></button>
+            </div>
+            <p class="hint" data-i18n="contacts.outDirHint"></p>
           </label>
           <label class="lbl lbl--wide">
             <span data-i18n="contacts.code"></span><em data-i18n="contacts.codeHint"></em>
@@ -420,6 +447,7 @@
           <label class="switch"><input type="checkbox" id="setNotify"><i></i><span data-i18n="set.notify"></span></label>
           <label class="switch"><input type="checkbox" id="setTray"><i></i><span data-i18n="set.tray"></span></label>
           <label class="switch"><input type="checkbox" id="setChecksums"><i></i><span data-i18n="sum.setting"></span></label>
+          <label class="switch" data-i18n-title="queue.hint"><input type="checkbox" id="setQueue"><i></i><span data-i18n="queue.setting"></span></label>
         </div>
       </div>
 
@@ -459,6 +487,7 @@
 
 <script src="i18n.js"></script>
 <script src="help.js"></script>
+<script src="request.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

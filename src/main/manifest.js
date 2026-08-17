@@ -121,6 +121,32 @@ function variantsOf(dir, rel) {
   }
 }
 
+/**
+ * Ist die Datei als Nachlieferung hereingekommen?
+ *
+ * croc flacht ab: wer "daten/unter/b.txt" nachschickt, bei dem kommt
+ * "b.txt" an - oben im Zielordner, nicht an seinem Platz. Nachgemessen.
+ * Wir erkennen sie an der Pruefsumme und legen sie dorthin, wo sie
+ * hingehoert. Nur bei genauer Uebereinstimmung, sonst waere es Raten.
+ */
+async function findDelivered(dir, entry) {
+  const flach = path.join(dir, path.basename(entry.name));
+  const ziel = path.join(dir, entry.name);
+  // Bei einer Datei, die ohnehin oben liegt, waere das dieselbe Datei.
+  if (path.resolve(flach) === path.resolve(ziel)) return null;
+
+  try {
+    if (fs.statSync(flach).size !== entry.size) return null;
+  } catch {
+    return null;
+  }
+  if (await hashFile(flach, () => {}) !== entry.sha256) return null;
+
+  fs.mkdirSync(path.dirname(ziel), { recursive: true });
+  fs.renameSync(flach, ziel);
+  return entry.name;
+}
+
 /** Liegt die Datei unter einem Ausweichnamen heil da? */
 async function findRenamed(dir, entry) {
   for (const cand of variantsOf(dir, entry.name)) {
@@ -156,6 +182,7 @@ async function verify(dir, onProgress) {
   const missing = [];
   const broken = [];
   const renamed = [];
+  const restored = [];
   let good = 0;
 
   for (const entry of list) {
@@ -186,13 +213,23 @@ async function verify(dir, onProgress) {
     else broken.push(entry.name);
   }
 
-  // Was fehlt oder kaputt ist, kann unter einem Ausweichnamen heil daliegen.
+  // Was fehlt oder kaputt ist, kann unter einem Ausweichnamen heil
+  // daliegen - oder gerade als Nachlieferung hereingekommen sein.
   const entryByName = (name) => list.find((e) => e.name === name);
 
   for (const bucket of [broken, missing]) {
     for (let i = bucket.length - 1; i >= 0; i--) {
       const entry = entryByName(bucket[i]);
       if (!entry) continue;
+
+      const zurueckgelegt = await findDelivered(dir, entry);
+      if (zurueckgelegt) {
+        restored.push(zurueckgelegt);
+        bucket.splice(i, 1);
+        good++;
+        continue;
+      }
+
       const other = await findRenamed(dir, entry);
       if (!other) continue;
       renamed.push({ expected: entry.name, actual: other });
@@ -202,7 +239,11 @@ async function verify(dir, onProgress) {
   }
 
   onProgress({ phase: 'verify', done: total, total });
-  try { fs.unlinkSync(file); } catch { /* egal */ }
+
+  const ok = broken.length === 0 && missing.length === 0;
+  // Solange etwas aussteht, bleibt die Liste liegen: sie ist der einzige
+  // Beleg, was noch fehlt, und sie sortiert die Nachlieferung wieder ein.
+  if (ok) { try { fs.unlinkSync(file); } catch { /* egal */ } }
 
   return {
     found: true,
@@ -211,7 +252,8 @@ async function verify(dir, onProgress) {
     broken,
     missing,
     renamed,
-    ok: broken.length === 0 && missing.length === 0
+    restored,
+    ok
   };
 }
 

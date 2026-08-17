@@ -82,6 +82,8 @@ contextBridge.exposeInMainWorld('croc', {
   pickBinary: () => ipcRenderer.invoke('dialog:pickBinary'),
   statPaths: (paths) => ipcRenderer.invoke('fs:stat', paths),
 
+  resolveResend: (names, roots) => ipcRenderer.invoke('resend:resolve', { names, roots }),
+
   start: (kind, opts) => ipcRenderer.invoke('transfer:start', { kind, opts }),
   cancel: (id) => ipcRenderer.invoke('transfer:cancel', id),
 

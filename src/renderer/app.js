@@ -13,7 +13,9 @@ const state = {
   lang: DEFAULT_LANG,
   files: [],          // [{path, name, size, dir}]
   jobs: new Map(),    // id -> Karte samt Zustand
-  contacts: [],       // [{id, name, code, note}]
+  queue: [],          // wartende Sendungen, der Reihe nach
+  resend: null,       // laufende Nachlieferung: {asked, found, missing}
+  contacts: [],       // [{id, name, code, note, outDir}]
   relayId: null,
   settings: {},
   defaultOutDir: '',
@@ -101,6 +103,8 @@ function applyLang() {
   renderMsgContacts();
   renderMsgLog();
   renderMsgState();
+  renderQueue();
+  renderResend();
   if (!$('#relayLog').dataset.fresh) $('#relayLog').textContent = T('relay.logEmpty');
   if (!editingId) $('#contactFoldTitle').textContent = T('contacts.new');
   gradeCode();
@@ -520,6 +524,7 @@ function handleEvent(id, event) {
       break;
 
     case 'done':
+      job.finished = true;
       job.stop.remove();
       job.stop = null;
       if (event.cancelled) {
@@ -544,18 +549,81 @@ function handleEvent(id, event) {
         setJobState(job, 'failed');
       }
       kindOf.delete(id);
+      // Die Leitung ist frei - der naechste Auftrag kann los.
+      if (job.kind === 'send') pumpQueue();
       break;
   }
 }
 
 api.onEvent(({ id, event }) => handleEvent(id, event));
 
+/* --------------------------- Nachlieferung ---------------------------
+   makeRequest und readRequest kommen aus request.js - sie werden auf
+   beiden Seiten gebraucht und sind dort fuer sich pruefbar.
+   ------------------------------------------------------------------ */
+
+function renderResend() {
+  const box = $('#resendBox');
+  if (!state.resend) { box.hidden = true; $('#resendGone').textContent = ''; return; }
+  box.hidden = false;
+  $('#resendWhat').textContent = T('resend.ready', state.resend.found, state.resend.asked);
+  $('#resendGone').textContent = state.resend.missing.length
+    ? T('resend.gone', state.resend.missing.join(', '))
+    : '';
+}
+
+function clearResend() {
+  state.resend = null;
+  renderResend();
+}
+
+/**
+ * Uebersetzt eine Nachforderung in Dateien und setzt die Auswahl darauf.
+ * Gesucht wird in dem, was gerade ausgewaehlt ist, und in den Pfaden der
+ * letzten Sendungen - meist ist es genau derselbe Ordner.
+ */
+async function takeRequest(names) {
+  const roots = [...new Set([
+    ...state.files.map((f) => f.path),
+    ...state.history.filter((h) => h.kind === 'send' && Array.isArray(h.paths))
+      .flatMap((h) => h.paths)
+  ])];
+
+  const { found, missing } = await api.resolveResend(names, roots);
+  if (!found.length) { toast(T('resend.nothing'), 'bad'); return false; }
+
+  const stats = await api.statPaths(found.map((f) => f.path));
+  state.files = stats.filter((s) => !s.missing);
+  renderFiles();
+
+  state.resend = { asked: names.length, found: found.length, missing };
+  renderResend();
+  showView('send');
+  return true;
+}
+
+$('#resendPaste').addEventListener('click', async () => {
+  let text = '';
+  try {
+    text = await navigator.clipboard.readText();
+  } catch {
+    toast(T('toast.clipboard'), 'bad');
+    return;
+  }
+  const names = readRequest(text);
+  if (!names) { toast(T('resend.notList'), 'bad'); return; }
+  await takeRequest(names);
+});
+
+$('#resendClear').addEventListener('click', clearResend);
+
 /* ---------------------------- Senden ---------------------------- */
 
-$('#sendStart').addEventListener('click', async () => {
+/** Alles, was die Oberflaeche gerade ueber die Sendung sagt. */
+function collectSendOpts() {
   const contact = contactById($('#sendContact').value);
   const code = contact ? contact.code : $('#optCode').value.trim();
-  if (code && code.length < 6) { toast(T('toast.codeShort'), 'bad'); return; }
+  if (code && code.length < 6) { toast(T('toast.codeShort'), 'bad'); return null; }
 
   const opts = {
     mode: sendMode,
@@ -566,29 +634,114 @@ $('#sendStart').addEventListener('click', async () => {
     exclude: $('#optExclude').value.trim(),
     store: $('#optStore').checked && sendMode !== 'text',
     storeDownloads: $('#optStoreDownloads').value,
-    storeExpiration: $('#optStoreExp').value.trim()
+    storeExpiration: $('#optStoreExp').value.trim(),
+    // Eine Nachlieferung bringt keine eigene Pruefsummenliste mit; drueben
+    // liegt noch die der urspruenglichen Sendung.
+    resend: Boolean(state.resend)
   };
 
   if (contact) opts.contactName = contact.name;
 
   if (sendMode === 'text') {
     const text = $('#sendText').value;
-    if (!text.trim()) { toast(T('toast.noText'), 'bad'); return; }
+    if (!text.trim()) { toast(T('toast.noText'), 'bad'); return null; }
     opts.text = text;
-  } else {
-    if (!state.files.length) { toast(T('toast.noFiles'), 'bad'); return; }
-    opts.paths = state.files.map((f) => f.path);
+    return { opts, label: T('job.text'), contactName: contact ? contact.name : null };
   }
 
-  const res = await api.start('send', opts);
-  if (!res.ok) { toast(res.message, 'bad'); return; }
+  if (!state.files.length) { toast(T('toast.noFiles'), 'bad'); return null; }
+  opts.paths = state.files.map((f) => f.path);
+  return {
+    opts,
+    label: T('job.entries', state.files.length),
+    contactName: contact ? contact.name : null
+  };
+}
+
+async function launchSend(entry) {
+  const res = await api.start('send', entry.opts);
+  if (!res.ok) { toast(res.message, 'bad'); return false; }
 
   const job = ensureJob(res.id, 'send');
-  if (!job.meta.label) {
-    job.meta.label = sendMode === 'text' ? T('job.text') : T('job.entries', state.files.length);
-  }
-  if (contact) job.meta.contactName = contact.name;
+  if (!job.meta.label) job.meta.label = entry.label;
+  if (entry.contactName) job.meta.contactName = entry.contactName;
   renderJobName(job);
+  return true;
+}
+
+/* -------------------------- Warteschlange --------------------------
+
+   Gleichzeitige Sendungen teilen sich dieselbe Leitung: drei parallele
+   sind nicht schneller als drei nacheinander, nur unuebersichtlicher.
+   Deshalb wird der Reihe nach abgearbeitet - abschaltbar, denn wer zwei
+   Gegenstellen gleichzeitig bedienen will, hat seine Gruende.
+   ------------------------------------------------------------------ */
+
+let queueKey = 0;
+
+const sendRunning = () => [...state.jobs.values()].some((j) => j.kind === 'send' && !j.finished);
+
+function renderQueue() {
+  const box = $('#queueBox');
+  const list = $('#queueList');
+  box.hidden = state.queue.length === 0;
+  list.textContent = '';
+
+  state.queue.forEach((entry, i) => {
+    const li = el('li', 'queue__item');
+    li.append(el('span', 'queue__pos', T('queue.position', i + 1)));
+    li.append(el('span', 'queue__name',
+      entry.contactName ? `${entry.label} → ${entry.contactName}` : entry.label));
+
+    const now = el('button', 'btn btn--ghost btn--sm', T('queue.startNow'));
+    now.type = 'button';
+    now.addEventListener('click', async () => {
+      state.queue = state.queue.filter((q) => q.key !== entry.key);
+      renderQueue();
+      await launchSend(entry);
+    });
+
+    const drop = el('button', 'queue__kill', '×');
+    drop.type = 'button';
+    drop.title = T('queue.drop');
+    drop.addEventListener('click', () => {
+      state.queue = state.queue.filter((q) => q.key !== entry.key);
+      renderQueue();
+    });
+
+    li.append(now, drop);
+    list.append(li);
+  });
+}
+
+/** Nimmt den naechsten Auftrag, sobald die Leitung frei ist. */
+async function pumpQueue() {
+  if (!state.queue.length || sendRunning()) return;
+  const entry = state.queue.shift();
+  renderQueue();
+  // Ein Fehlschlag haelt die Schlange nicht auf - der naechste ist dran.
+  if (!await launchSend(entry)) pumpQueue();
+}
+
+$('#queueClear').addEventListener('click', () => {
+  state.queue = [];
+  renderQueue();
+});
+
+$('#sendStart').addEventListener('click', async () => {
+  const entry = collectSendOpts();
+  if (!entry) return;
+  entry.key = ++queueKey;
+
+  if (state.settings.queue && sendRunning()) {
+    state.queue.push(entry);
+    renderQueue();
+    toast(T('queue.added', state.queue.length - 1), '');
+  } else if (!await launchSend(entry)) {
+    return;
+  }
+  // Die Auswahl ist uebergeben - eine Nachlieferung gilt nur einmal.
+  if (state.resend) clearResend();
 });
 
 /* --------------------------- Empfangen --------------------------- */
@@ -648,7 +801,11 @@ $('#recvStart').addEventListener('click', async () => {
 
   const job = ensureJob(res.id, 'receive');
   job.meta.outDir = outDir;
-  if (known) job.meta.contactName = known.name;
+  if (known) {
+    job.meta.contactName = known.name;
+    // Fuer die Nachforderung: an wen sie ginge.
+    job.meta.contactId = known.id;
+  }
   renderJobName(job);
   $('#recvCode').value = '';
   $('#recvContact').value = '';
@@ -716,6 +873,12 @@ function renderContacts() {
     head.append(acts);
     card.append(head, el('code', 'card__code', c.code));
     if (c.note) card.append(el('p', 'card__note', c.note));
+    if (c.outDir) {
+      const where = el('p', 'card__where');
+      where.append(el('span', 'card__whereLabel', T('contacts.outDir')));
+      where.append(el('span', null, c.outDir));
+      card.append(where);
+    }
     list.append(card);
   });
 
@@ -748,12 +911,28 @@ function syncSendContact() {
 
 $('#sendContact').addEventListener('change', syncSendContact);
 
+/**
+ * Hat der Kontakt einen eigenen Zielordner, wird er sichtbar eingetragen -
+ * nicht still im Hintergrund benutzt. Wo etwas landet, soll man vorher
+ * lesen koennen.
+ */
+function applyContactOutDir(contact) {
+  if (contact && contact.outDir) $('#recvOut').value = contact.outDir;
+}
+
 $('#recvContact').addEventListener('change', () => {
   const c = contactById($('#recvContact').value);
   if (c) {
     $('#recvCode').value = c.code;
+    applyContactOutDir(c);
     $('#recvCode').focus();
   }
+});
+
+// Auch wenn der Code eingetippt oder eingefuegt wird, statt den Kontakt
+// aus der Liste zu waehlen.
+$('#recvCode').addEventListener('input', () => {
+  applyContactOutDir(contactByCode($('#recvCode').value.trim()));
 });
 
 function startEdit(contact) {
@@ -761,6 +940,7 @@ function startEdit(contact) {
   $('#contactName').value = contact.name;
   $('#contactCode').value = contact.code;
   $('#contactNote').value = contact.note || '';
+  $('#contactOut').value = contact.outDir || '';
   $('#contactFoldTitle').textContent = T('contacts.edit', contact.name);
   $('#contactFold').open = true;
   gradeCode();
@@ -773,6 +953,7 @@ function resetForm() {
   $('#contactName').value = '';
   $('#contactCode').value = '';
   $('#contactNote').value = '';
+  $('#contactOut').value = '';
   $('#contactFoldTitle').textContent = T('contacts.new');
   $('#contactStrength').textContent = '';
   $('#contactStrength').dataset.tone = '';
@@ -800,6 +981,13 @@ function gradeCode(bits) {
 
 $('#contactCode').addEventListener('input', () => gradeCode());
 
+$('#contactOutPick').addEventListener('click', async () => {
+  const dir = await api.pickFolder($('#contactOut').value);
+  if (dir) $('#contactOut').value = dir;
+});
+
+$('#contactOutClear').addEventListener('click', () => { $('#contactOut').value = ''; });
+
 $('#contactDice').addEventListener('click', async () => {
   const { code, bits } = await api.generateCode();
   $('#contactCode').value = code;
@@ -815,7 +1003,13 @@ $('#contactSave').addEventListener('click', async () => {
   const clash = state.contacts.find((c) => c.code === code && c.id !== editingId);
   if (clash) { toast(T('toast.codeTaken', clash.name), 'bad'); return; }
 
-  state.contacts = await api.saveContact({ id: editingId, name, code, note: $('#contactNote').value });
+  state.contacts = await api.saveContact({
+    id: editingId,
+    name,
+    code,
+    note: $('#contactNote').value,
+    outDir: $('#contactOut').value
+  });
   const wasEdit = Boolean(editingId);
   resetForm();
   renderContacts();
@@ -928,7 +1122,8 @@ const FIELDS = [
   ['#setAutoUpdate', 'autoUpdate', 'checked'],
   ['#setNotify', 'notify', 'checked'],
   ['#setTray', 'tray', 'checked'],
-  ['#setChecksums', 'checksums', 'checked']
+  ['#setChecksums', 'checksums', 'checked'],
+  ['#setQueue', 'queue', 'checked']
 ];
 
 function fillSettings(values) {
@@ -1100,10 +1295,18 @@ api.onManifestResult(({ id, result }) => {
   if (!job) return;
   const line = job.check || el('div', 'job__check');
   job.check = line;
+  if (job.checkActs) { job.checkActs.remove(); job.checkActs = null; }
+
+  const restored = (result.restored || []).length;
 
   if (!result.found) {
     line.textContent = T('sum.none');
     line.dataset.tone = 'off';
+  } else if (result.ok && restored) {
+    // Eine Nachlieferung ist eingegangen und wieder an ihren Platz gelegt.
+    line.textContent = T('sum.restored', result.good, result.total, restored);
+    line.dataset.tone = 'ok';
+    line.title = result.restored.join('\n');
   } else if (result.ok && (result.renamed || []).length) {
     line.textContent = T('sum.renamed', result.good, result.total, result.renamed.length);
     line.dataset.tone = 'ok';
@@ -1115,11 +1318,46 @@ api.onManifestResult(({ id, result }) => {
     line.textContent = T('sum.bad', result.good, result.total,
       result.broken.length, result.missing.length);
     line.dataset.tone = 'bad';
-    if (result.broken.length || result.missing.length) {
-      line.title = [...result.broken, ...result.missing].join('\n');
-    }
+    line.title = [...result.broken, ...result.missing].join('\n');
   }
   if (!line.isConnected) job.el.append(line);
+
+  // Was fehlt, laesst sich nachfordern - bisher war die Liste eine
+  // Sackgasse, aus der man die Namen nur ablesen konnte.
+  if (result.found && !result.ok) {
+    const fehlend = [...result.broken, ...result.missing];
+    const acts = el('div', 'job__checkActs');
+    job.checkActs = acts;
+
+    acts.append(el('span', 'job__checkAsk', T('sum.askAgain', fehlend.length)));
+
+    const copy = el('button', 'btn btn--sm btn--go', T('sum.copyList'));
+    copy.type = 'button';
+    copy.addEventListener('click', async () => {
+      await api.copy(makeRequest(fehlend));
+      toast(T('sum.listCopied'), 'good');
+    });
+    acts.append(copy);
+
+    // Direkt schicken geht nur, wenn die Gegenstelle ein Kontakt ist und
+    // der Nachrichtenweg ueberhaupt offensteht.
+    const contact = job.meta.contactId ? contactById(job.meta.contactId) : null;
+    if (contact && state.msgRelay) {
+      const send = el('button', 'btn btn--sm btn--ghost', T('sum.sendList', contact.name));
+      send.type = 'button';
+      send.addEventListener('click', async () => {
+        send.disabled = true;
+        const res = await api.sendMessage(contact.id, makeRequest(fehlend));
+        send.disabled = false;
+        toast(res.ok ? T('sum.listSent', contact.name)
+          : T('sum.listFailed', res.reason || ''), res.ok ? 'good' : 'bad');
+      });
+      acts.append(send);
+    }
+
+    acts.append(el('p', 'hint', T('sum.stillOwed')));
+    job.el.append(acts);
+  }
 });
 
 /* ------------------------------ Hilfe ------------------------------ */
@@ -1259,6 +1497,26 @@ function renderMsgLog() {
     return;
   }
   state.msgLog.forEach((m) => {
+    const names = readRequest(m.text);
+    // Eine Nachforderung ist keine Nachricht zum Lesen, sondern eine zum
+    // Handeln - die rohe Dateiliste als Sprechblase hilft niemandem.
+    if (names) {
+      const b = el('div', 'bubble bubble--req');
+      b.dataset.dir = m.dir;
+      b.append(el('div', 'bubble__req', T('msg.request', names.length)));
+      b.append(el('pre', 'bubble__files', names.join('\n')));
+      if (m.dir === 'in') {
+        const take = el('button', 'btn btn--sm btn--go', T('msg.requestTake'));
+        take.type = 'button';
+        take.addEventListener('click', async () => {
+          if (await takeRequest(names)) toast(T('msg.requestTaken'), 'good');
+        });
+        b.append(take);
+      }
+      b.append(el('time', null, stamp(m.at)));
+      box.append(b);
+      return;
+    }
     const b = el('div', 'bubble', m.text);
     b.dataset.dir = m.dir;
     b.append(el('time', null, stamp(m.at)));

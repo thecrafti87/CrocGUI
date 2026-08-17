@@ -200,6 +200,34 @@ then says “no checksums came along” and nothing else happens. Switchable und
 Settings. The list travels when zipping too: croc only packs for transport and
 unpacks again at the receiver, so the names still match.
 
+## Asking for what is missing
+
+When the checksums come up short, the list of missing files is no longer a dead
+end. Under the transfer sits a button that copies it — or sends it straight to
+the contact, if the message channel is open. The other side pastes it under Send
+with **paste request**, and only those files go out.
+
+croc flattens: a file sent as `photos/2024/beach.jpg` arrives as `beach.jpg`.
+CrocGUI puts it back — it recognises the file by its checksum and files it into
+the right folder. That is why the checksum list stays in the target folder as
+long as anything is outstanding, and clears itself only once everything is
+there. A follow-up delivery deliberately carries no list of its own; the
+original one is the record of what is owed.
+
+## One after another
+
+Transfers are worked through in order rather than all at once — parallel
+transfers share the same line and all become slower. The queue is visible, entries
+can be dropped or started straight away, and a failure does not hold up the rest.
+Switch it off under Settings if you would rather serve two counterparts at once.
+
+## A folder per contact
+
+Contacts can carry their own target folder: whatever arrives from them lands
+there instead of in the general one. The folder is filled in visibly when the
+contact or their code is entered — where something is saved should be readable
+beforehand.
+
 ## Why receiving overwrites
 
 croc creates the target file at full size immediately. If a transfer breaks off,

@@ -291,6 +291,7 @@ async function verifyReceived(id, dir) {
       good: result.good,
       broken: result.broken,
       missing: result.missing,
+      restored: result.restored || [],
       outDir: dir
     });
     if (win && !win.isDestroyed()) win.webContents.send('history:changed');
@@ -592,7 +593,9 @@ ipcMain.handle('contacts:save', (_e, contact) => {
     id: contact.id || crypto.randomUUID(),
     name: String(contact.name || '').trim(),
     code: String(contact.code || '').trim(),
-    note: String(contact.note || '').trim()
+    note: String(contact.note || '').trim(),
+    // Leer heisst: der allgemeine Zielordner aus den Einstellungen.
+    outDir: String(contact.outDir || '').trim()
   };
   const at = list.findIndex((c) => c.id === entry.id);
   if (at >= 0) list[at] = entry;
@@ -650,6 +653,39 @@ ipcMain.handle('fs:stat', (_e, targets) => {
   });
 });
 
+/**
+ * Eine Nachforderung in Pfade uebersetzen.
+ *
+ * Der Empfaenger kennt nur Namen wie "daten/unter/b.txt" - so steht es
+ * in der Pruefsummenliste, und deren erster Teil ist der Name des
+ * Ordners, den der Sender ausgewaehlt hatte. Damit laesst sich die Datei
+ * beim Sender wiederfinden, solange er dieselbe Auswahl noch hat.
+ */
+ipcMain.handle('resend:resolve', (_e, { names, roots }) => {
+  const found = [];
+  const missing = [];
+
+  for (const name of names || []) {
+    const rel = String(name).replace(/^\/+/, '');
+    const [first, ...rest] = rel.split('/');
+    let hit = null;
+
+    for (const root of roots || []) {
+      if (path.basename(root) !== first) continue;
+      const candidate = rest.length ? path.join(root, ...rest) : root;
+      try {
+        const st = fs.statSync(candidate);
+        if (st.isFile()) { hit = { name: rel, path: candidate, size: st.size }; break; }
+      } catch { /* weitersuchen */ }
+    }
+
+    if (hit) found.push(hit);
+    else missing.push(rel);
+  }
+
+  return { found, missing };
+});
+
 ipcMain.handle('transfer:start', async (_e, { kind, opts }) => {
   try {
     let sheet = null;
@@ -661,10 +697,15 @@ ipcMain.handle('transfer:start', async (_e, { kind, opts }) => {
     // schickt, laesst sich nicht vorhersagen (es haelt sich nicht an
     // Verzeichnismuster wie node_modules/), und jede Abweichung waere eine
     // Falschmeldung "fehlt".
+    // Eine Nachlieferung bringt bewusst keine eigene Liste mit: beim
+    // Empfaenger liegt noch die der urspruenglichen Sendung, und die ist
+    // der Beleg, was noch fehlt. Eine neue wuerde sie ueberschreiben und
+    // damit genau die Auskunft loeschen, um die es geht.
     const wantSheet = kind === 'send'
       && settings.load().checksums
       && opts.mode !== 'text'
       && !opts.git
+      && !opts.resend
       && Array.isArray(opts.paths) && opts.paths.length;
 
     if (wantSheet) {

@@ -212,6 +212,35 @@ Läuft auf der Gegenseite kein CrocGUI, fehlt die Liste einfach — dann steht d
 *Einstellungen*. Die Liste geht auch beim Zippen mit: croc packt nur für den
 Transport und entpackt beim Empfänger wieder, die Namen stimmen also weiterhin.
 
+## Fehlendes nachfordern
+
+Wenn die Prüfsummen etwas vermissen, ist die Liste keine Sackgasse mehr. Unter
+der Übertragung steht ein Knopf, der sie kopiert — oder sie direkt an den
+Kontakt schickt, sofern der Nachrichtenweg offen ist. Die Gegenstelle fügt sie
+unter Senden mit **Nachforderung einfügen** ein, und nur diese Dateien gehen
+raus.
+
+croc flacht dabei ab: was als `Bilder/2024/strand.jpg` losgeschickt wird, kommt
+als `strand.jpg` an. CrocGUI legt es wieder an seinen Platz — es erkennt die
+Datei an ihrer Prüfsumme und sortiert sie in den richtigen Ordner ein. Deshalb
+bleibt die Prüfsummenliste im Zielordner liegen, solange etwas aussteht, und
+räumt sich erst weg, wenn alles da ist. Eine Nachlieferung bringt bewusst keine
+eigene Liste mit; die der ursprünglichen Sendung ist der Beleg, was fehlt.
+
+## Nacheinander statt gleichzeitig
+
+Sendungen werden der Reihe nach abgearbeitet — gleichzeitige teilen sich
+dieselbe Leitung und werden dadurch alle langsamer. Die Warteschlange ist
+sichtbar, Einträge lassen sich entfernen oder sofort starten, und ein
+Fehlschlag hält den Rest nicht auf. Wer zwei Gegenstellen gleichzeitig bedienen
+will, schaltet das in den Einstellungen ab.
+
+## Ein Ordner je Kontakt
+
+Kontakte können einen eigenen Zielordner bekommen: was von ihnen kommt, landet
+dort statt im allgemeinen. Der Ordner wird sichtbar eingetragen, sobald der
+Kontakt oder sein Code dasteht — wo etwas landet, soll man vorher lesen können.
+
 ## Warum beim Empfangen überschrieben wird
 
 croc legt die Zieldatei sofort in voller Größe an. Bricht eine Übertragung ab,

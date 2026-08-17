@@ -11,6 +11,9 @@ const DEFAULTS = {
   notify: true,
   tray: true,
   checksums: true,
+  // Sendungen nacheinander abarbeiten statt gleichzeitig. Parallele
+  // teilen sich dieselbe Leitung und werden dadurch alle langsamer.
+  queue: true,
   // Leer bedeutet jeweils: croc entscheidet selbst / Standardwert von croc.
   crocPath: '',
   relay: '',
@@ -25,7 +28,7 @@ const DEFAULTS = {
   noCompress: false,
   internalDns: false,
   relayPorts: '9009,9010,9011,9012,9013',
-  // [{ id, name, code, note }] - feste Codes je Gegenstelle
+  // [{ id, name, code, note, outDir }] - feste Codes je Gegenstelle
   contacts: []
 };
 

@@ -79,6 +79,14 @@ const HELP = {
       note: 'The list is skipped when .gitignore is enabled — what croc leaves out there cannot be predicted.'
     },
     {
+      title: 'Asking for what is missing',
+      body: [
+        'When the checksums come up short, the list of missing files is not a dead end. Under the transfer there is a button that copies the list — or sends it straight to the contact, if the message channel is open. The other side pastes it under Send with "paste request", and only those files go out. Nothing else is transferred twice.',
+        'croc flattens: a file sent as "photos/2024/beach.jpg" arrives as "beach.jpg". CrocGUI puts it back where it belongs — it recognises the file by its checksum and files it into the right folder. That is why the checksum list stays in the target folder as long as anything is outstanding, and only clears itself once everything is there.',
+        'A follow-up delivery deliberately carries no checksum list of its own; the original one is still lying there and is the record of what is owed.'
+      ]
+    },
+    {
       title: 'Where it has limits',
       body: [
         'croc reads .gitignore only in part. Plain names and patterns like *.log work, folder rules such as node_modules/ do not. The .git folder itself always travels along, history included. Typing .git,node_modules into the exclude field is the more reliable route.',
@@ -165,6 +173,14 @@ const HELP = {
       note: 'Bei aktiviertem .gitignore entfällt die Liste — was croc dort weglässt, lässt sich nicht vorhersagen.'
     },
     {
+      title: 'Fehlendes nachfordern',
+      body: [
+        'Wenn die Prüfsummen etwas vermissen, ist die Liste keine Sackgasse mehr. Unter der Übertragung steht ein Knopf, der sie kopiert — oder sie direkt an den Kontakt schickt, sofern der Nachrichtenweg offen ist. Die Gegenstelle fügt sie unter Senden mit „Nachforderung einfügen" ein, und nur diese Dateien gehen raus. Nichts wird ein zweites Mal übertragen.',
+        'croc flacht dabei ab: was als „Bilder/2024/strand.jpg" losgeschickt wird, kommt als „strand.jpg" an. CrocGUI legt es wieder an seinen Platz — es erkennt die Datei an ihrer Prüfsumme und sortiert sie in den richtigen Ordner ein. Deshalb bleibt die Prüfsummenliste im Zielordner liegen, solange etwas aussteht, und räumt sich erst weg, wenn alles da ist.',
+        'Eine Nachlieferung bringt bewusst keine eigene Prüfsummenliste mit; drüben liegt noch die der ursprünglichen Sendung, und die ist der Beleg, was fehlt.'
+      ]
+    },
+    {
       title: 'Wo es Grenzen gibt',
       body: [
         'croc liest .gitignore nur teilweise. Einfache Namen und Muster wie *.log greifen, Ordnerregeln wie node_modules/ nicht. Der Ordner .git geht immer mit, samt Historie. Zuverlässiger ist es, .git,node_modules ins Ausschlussfeld zu tippen.',
@@ -249,6 +265,14 @@ const HELP = {
         'Cela existe parce que la taille et la date ne prouvent rien ici : un transfert interrompu laisse un fichier de la taille exacte avec une date fraîche.'
       ],
       note: 'La liste est omise lorsque .gitignore est activé — ce que croc écarte alors est imprévisible.'
+    },
+    {
+      title: 'Redemander ce qui manque',
+      body: [
+        'Lorsque les sommes de contrôle signalent un manque, la liste n’est plus une impasse. Sous le transfert, un bouton la copie — ou l’envoie directement au contact, si le canal de messages est ouvert. Le correspondant la colle sous Envoyer avec « coller la demande », et seuls ces fichiers repartent. Rien n’est transféré deux fois.',
+        'croc aplatit : ce qui part comme « photos/2024/plage.jpg » arrive comme « plage.jpg ». CrocGUI le remet à sa place — il reconnaît le fichier à sa somme de contrôle et le range dans le bon dossier. C’est pourquoi la liste reste dans le dossier cible tant que quelque chose manque, et ne disparaît qu’une fois tout arrivé.',
+        'Un envoi complémentaire ne porte volontairement pas sa propre liste ; celle de l’envoi d’origine est encore là, et c’est elle qui fait foi.'
+      ]
     },
     {
       title: 'Là où il y a des limites',
