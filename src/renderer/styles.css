@@ -1489,3 +1489,50 @@ select.field {
   word-break: break-word;
   user-select: text;
 }
+
+/* ---------------------------------------------------------------- *
+   Zwischenlagerung
+   ---------------------------------------------------------------- */
+
+.job__store {
+  margin-top: 12px;
+  padding: 15px 17px;
+  border: 1px solid var(--amber);
+  border-radius: var(--r-md);
+  background: rgba(242, 177, 46, .06);
+}
+.job__storeLabel {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 8px;
+}
+.job__storeUntil {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--haze);
+  margin-bottom: 10px;
+}
+.job__storeLink {
+  display: block;
+  padding: 9px 11px;
+  margin-bottom: 9px;
+  border-radius: var(--r-sm);
+  background: var(--ink-900);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--bone);
+  word-break: break-all;
+  user-select: text;
+}
+.job__storeHint {
+  font-size: 12px;
+  color: var(--haze);
+  margin-bottom: 12px;
+  max-width: 62ch;
+}
+.job__storeActs { display: flex; gap: 7px; flex-wrap: wrap; }

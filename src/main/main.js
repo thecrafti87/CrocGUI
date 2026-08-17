@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const crypto = require('crypto');
+const { execFile } = require('child_process');
 const {
   app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, Notification, nativeImage, Tray
 } = require('electron');
@@ -305,6 +306,12 @@ function trackNotify(id, event) {
     info.size = event.size;
     return;
   }
+  // Ohne Link und Kennung kommt spaeter niemand mehr an die Daten -
+  // die gehoeren in den Verlauf, nicht nur in die Karte.
+  if (event.type === 'store') {
+    info.store = { link: event.link, token: event.token, revoke: event.revoke, until: event.until };
+    return;
+  }
   if (event.type !== 'done') return;
 
   pending.delete(id);
@@ -327,6 +334,7 @@ function trackNotify(id, event) {
     contact: info.contactName || null,
     outDir: info.outDir || null,
     paths: info.paths || null,
+    store: info.store || null,
     ok: Boolean(event.ok),
     cancelled: Boolean(event.cancelled)
   });
@@ -455,6 +463,19 @@ ipcMain.handle('settings:set', (_e, patch) => {
 
 ipcMain.handle('history:list', () => history.withExistence(history.load()));
 ipcMain.handle('history:clear', () => history.clear());
+
+/* Zwischenlagerung widerrufen */
+
+ipcMain.handle('store:revoke', async (_e, receipt) => {
+  const bin = await detect();
+  if (!bin.ok) return { ok: false, message: 'croc fehlt' };
+  return new Promise((resolve) => {
+    execFile(bin.path, ['--revoke', String(receipt)], { timeout: 20000 }, (err, stdout, stderr) => {
+      const out = `${stdout || ''}${stderr || ''}`.trim();
+      resolve(err ? { ok: false, message: out || err.message } : { ok: true, message: out });
+    });
+  });
+});
 
 /* Selbsttest */
 

@@ -31,6 +31,8 @@ contextBridge.exposeInMainWorld('croc', {
     return () => ipcRenderer.removeListener('manifest:result', handler);
   },
 
+  revokeStore: (receipt) => ipcRenderer.invoke('store:revoke', receipt),
+
   runDiagnose: () => ipcRenderer.invoke('diag:run'),
   testNotification: () => ipcRenderer.invoke('diag:testNote'),
   openPane: (which) => ipcRenderer.invoke('system:pane', which),

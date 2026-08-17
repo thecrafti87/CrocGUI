@@ -73,7 +73,7 @@ Code-Wortgruppe ausgibt, erscheint sie gross im Fenster, dazu Knoepfe zum
 Kopieren des Codes, des fertigen Befehls fuer die Gegenstelle und ein
 QR-Code. Pro Uebertragung einstellbar: eigener Code, Ordner vorher zippen,
 `.gitignore` beachten, Dateien ausschliessen, verschluesselte Zwischenlagerung
-beim Anbieter (fuer den Fall, dass die Gegenstelle gerade nicht online ist).
+beim Anbieter (siehe unten).
 
 **Text** — Statt Dateien laesst sich auch reiner Text senden. Der kommt
 beim Empfaenger nicht als Datei an, sondern wird angezeigt: die
@@ -199,6 +199,22 @@ Fassungen veroeffentlichen:
 ```bash
 npm version patch && npm run dist -- --publish always
 ```
+
+## Zwischenlagerung beim Anbieter
+
+Mit dieser Option laedt croc die Dateien verschluesselt zu getcroc.com,
+mit einer Lebensdauer und einer Zahl erlaubter Abrufe. Die Gegenstelle
+muss dabei nicht online sein.
+
+Wichtig zu wissen: eine Zwischenlagerung hat **keine Code-Wortgruppe**.
+croc gibt stattdessen einen Browser-Link, ein Token fuer die
+Kommandozeile und eine Kennung zum Widerrufen aus. Nur damit kommt
+jemand an die Daten - der Code im Sendefenster nuetzt hier nichts.
+
+Die App zeigt diese drei Angaben deshalb gross an der Uebertragungskarte,
+mit Knoepfen zum Kopieren, zum Oeffnen im Browser und zum Widerrufen. Und
+sie merkt sie sich im Verlauf: waeren sie nur in der Karte, waeren die
+Daten nach dem Schliessen der App unerreichbar.
 
 ## Pruefsummen
 

@@ -123,6 +123,13 @@ const RE_ERROR = /^\s*(?:error|Error|panic):?\s*(.+)$/;
 // Text kommt nicht als Datei an, sondern wird ausgegeben - wir fangen ihn
 // auf, damit er nicht nur im Protokoll steht.
 const RE_TEXT_START = /Receiving text message/;
+// Eine Zwischenlagerung hat keine Code-Wortgruppe. croc gibt stattdessen
+// einen Browser-Link, ein Token fuer die Kommandozeile und eine Kennung
+// zum Widerrufen aus - ohne die kommt niemand an die Daten.
+const RE_STORE_LINK = /(https:\/\/\S+\/s\/\S+)/;
+const RE_STORE_TOKEN = /(croc-store-v1\.\S+)/;
+const RE_STORE_REVOKE = /--revoke\s+(\S+)/;
+const RE_STORE_UNTIL = /available until\s+(.+?)\s+or\s+(.+?)\.?$/;
 const RE_NOISE = /^(?:connecting|securing|Receiving \(|Sending \()/;
 
 /**
@@ -308,6 +315,17 @@ class Runner {
 
         this.emit(id, { type: 'log', line });
 
+        const link = line.match(RE_STORE_LINK);
+        if (link) { job.store = { ...(job.store || {}), link: link[1] }; }
+        const token = line.match(RE_STORE_TOKEN);
+        if (token) { job.store = { ...(job.store || {}), token: token[1] }; }
+        const revoke = line.match(RE_STORE_REVOKE);
+        if (revoke) { job.store = { ...(job.store || {}), revoke: revoke[1] }; }
+        const until = line.match(RE_STORE_UNTIL);
+        if (until) {
+          job.store = { ...(job.store || {}), until: until[1].trim(), limit: until[2].trim() };
+        }
+
         if (RE_TEXT_START.test(line)) { job.textLines = []; continue; }
         if (job.textLines && !RE_NOISE.test(line)) { job.textLines.push(line); continue; }
         const evt = parseLine(line);
@@ -333,6 +351,9 @@ class Runner {
       if (job.cancelled) {
         this.emit(id, { type: 'done', ok: false, cancelled: true });
         return;
+      }
+      if (job.store && (job.store.link || job.store.token)) {
+        this.emit(id, { type: 'store', ...job.store });
       }
       if (job.textLines && job.textLines.length) {
         this.emit(id, { type: 'text', text: job.textLines.join('\n') });

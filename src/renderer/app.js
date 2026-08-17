@@ -426,6 +426,50 @@ function handleEvent(id, event) {
       setJobState(job, 'verifying', event.percent);
       break;
 
+    case 'store': {
+      // Ohne Link oder Token kommt niemand an die Daten - das gehoert
+      // nach vorn, nicht ins Protokoll.
+      const box = el('div', 'job__store');
+      box.append(el('div', 'job__storeLabel', T('store.title')));
+      if (event.until) {
+        box.append(el('p', 'job__storeUntil', T('store.until', event.until, event.limit || '')));
+      }
+      if (event.link) box.append(el('code', 'job__storeLink', event.link));
+      box.append(el('p', 'job__storeHint', T('store.hint')));
+
+      const acts = el('div', 'job__storeActs');
+      const btn = (label, fn, cls = 'btn btn--ghost btn--sm') => {
+        const b = el('button', cls, label);
+        b.type = 'button';
+        b.addEventListener('click', fn);
+        return b;
+      };
+      if (event.link) {
+        acts.append(btn(T('store.copyLink'), async () => {
+          await api.copy(event.link);
+          toast(T('store.copiedLink'), 'good');
+        }, 'btn btn--go btn--sm'));
+        acts.append(btn(T('store.open'), () => api.openExternal(event.link)));
+      }
+      if (event.token) {
+        const t2 = btn(T('store.copyToken'), async () => {
+          await api.copy(event.token);
+          toast(T('store.copiedToken'), 'good');
+        });
+        t2.title = T('store.tokenHint');
+        acts.append(t2);
+      }
+      if (event.revoke) {
+        acts.append(btn(T('store.revoke'), async () => {
+          const res = await api.revokeStore(event.revoke);
+          toast(res.ok ? T('store.revoked') : T('store.revokeFailed', res.message), res.ok ? 'good' : 'bad');
+        }, 'btn btn--stop btn--sm'));
+      }
+      box.append(acts);
+      job.el.insertBefore(box, job.logSummary.parentElement);
+      break;
+    }
+
     case 'text': {
       // Text kommt nicht als Datei an - ohne diese Anzeige stuende er nur
       // im Protokoll.
@@ -1115,6 +1159,25 @@ function renderHistory() {
         toast(T('toast.repeatAdded'), 'good');
       });
       acts.append(again);
+    }
+    if (h.store && h.store.link) {
+      const copy = el('button', 'btn btn--ghost btn--sm', T('store.copyLink'));
+      copy.type = 'button';
+      copy.title = h.store.until ? T('store.until', h.store.until, '') : '';
+      copy.addEventListener('click', async () => {
+        await api.copy(h.store.link);
+        toast(T('store.copiedLink'), 'good');
+      });
+      acts.append(copy);
+      if (h.store.revoke) {
+        const rev = el('button', 'btn btn--ghost btn--sm', T('store.revoke'));
+        rev.type = 'button';
+        rev.addEventListener('click', async () => {
+          const res = await api.revokeStore(h.store.revoke);
+          toast(res.ok ? T('store.revoked') : T('store.revokeFailed', res.message), res.ok ? 'good' : 'bad');
+        });
+        acts.append(rev);
+      }
     }
     if (h.kind === 'receive' && h.outDir) {
       const open = el('button', 'btn btn--ghost btn--sm', T('hist.openFolder'));
