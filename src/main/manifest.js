@@ -18,8 +18,18 @@ const crypto = require('crypto');
 const NAME = 'crocgui-manifest.json';
 const TICK = 64 * 1024 * 1024; // so oft melden wir Fortschritt
 
-/** Alle Dateien unter den ausgewaehlten Pfaden, mit Namen wie beim Empfaenger. */
-function collect(paths) {
+/**
+ * Alle Dateien unter den ausgewaehlten Pfaden, mit Namen wie beim
+ * Empfaenger. `excludes` bildet die Regel von croc nach: eine Datei
+ * faellt weg, wenn ihr Pfad eine der Zeichenketten enthaelt. Ohne diese
+ * Nachbildung stuenden ausgeschlossene Dateien in der Liste und wuerden
+ * beim Empfaenger als "fehlend" gemeldet.
+ */
+function collect(paths, excludes = []) {
+  const drop = excludes
+    .map((e) => String(e).trim())
+    .filter(Boolean);
+  const excluded = (rel) => drop.some((d) => rel.includes(d));
   const out = [];
 
   const walk = (abs, rel) => {
@@ -33,7 +43,7 @@ function collect(paths) {
       for (const entry of fs.readdirSync(abs)) {
         walk(path.join(abs, entry), rel ? `${rel}/${entry}` : entry);
       }
-    } else if (st.isFile()) {
+    } else if (st.isFile() && !excluded(rel)) {
       out.push({ abs, rel, size: st.size });
     }
   };
@@ -56,8 +66,8 @@ function hashFile(file, onChunk) {
  * Schreibt die Liste in einen eigenen Ordner und gibt deren Pfad zurueck.
  * `cleanup` raeumt ihn wieder weg, sobald die Uebertragung durch ist.
  */
-async function build(paths, version, onProgress) {
-  const files = collect(paths);
+async function build(paths, version, onProgress, excludes = []) {
+  const files = collect(paths, excludes);
   const total = files.reduce((n, f) => n + f.size, 0);
   let done = 0;
   let lastTick = 0;

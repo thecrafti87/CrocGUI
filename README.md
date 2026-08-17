@@ -222,6 +222,24 @@ mit Knoepfen zum Kopieren, zum Oeffnen im Browser und zum Widerrufen. Und
 sie merkt sie sich im Verlauf: waeren sie nur in der Karte, waeren die
 Daten nach dem Schliessen der App unerreichbar.
 
+## .gitignore und Ausschluesse
+
+Zwei Beobachtungen aus dem Test, die man kennen sollte:
+
+croc liest `.gitignore` nur teilweise. Einfache Namen (`geheim.txt`) und
+Muster (`*.log`) greifen, Ordnerregeln wie `node_modules/` nicht -
+`git check-ignore` haelt die Datei fuer ignoriert, croc schickt sie
+trotzdem. Und der Ordner `.git` selbst geht immer mit, samt
+vollstaendiger Historie.
+
+`--exclude` ist ein schlichter Textvergleich ueber den ganzen Pfad. Der
+Eintrag `.git` wirft deshalb auch `.gitignore` mit hinaus.
+
+Die Pruefsummenliste bildet die Ausschluesse nach, damit ausgelassene
+Dateien nicht faelschlich als "fehlend" gemeldet werden. Bei aktiviertem
+`.gitignore` entfaellt die Liste dagegen ganz: was croc dort weglaesst,
+laesst sich nicht vorhersagen.
+
 ## Pruefsummen
 
 Beim Senden legt die App eine Liste mit SHA-256 je Datei bei

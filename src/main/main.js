@@ -590,14 +590,21 @@ ipcMain.handle('transfer:start', async (_e, { kind, opts }) => {
     // Auch beim Zippen: croc entpackt beim Empfaenger wieder, die Namen
     // stimmen also weiterhin - und ein Archiv, das die Uebertragung nicht
     // ueberlebt, kann nichts pruefen.
+    //
+    // Bei --git dagegen keine Liste: welche Dateien croc dann wirklich
+    // schickt, laesst sich nicht vorhersagen (es haelt sich nicht an
+    // Verzeichnismuster wie node_modules/), und jede Abweichung waere eine
+    // Falschmeldung "fehlt".
     const wantSheet = kind === 'send'
       && settings.load().checksums
       && opts.mode !== 'text'
+      && !opts.git
       && Array.isArray(opts.paths) && opts.paths.length;
 
     if (wantSheet) {
       sendProgress({ phase: 'build', done: 0, total: 1 });
-      sheet = await manifest.build(opts.paths, app.getVersion(), sendProgress);
+      const excludes = String(opts.exclude || '').split(',');
+      sheet = await manifest.build(opts.paths, app.getVersion(), sendProgress, excludes);
       // Zuerst, nicht zuletzt: bei einem Abbruch ist sie sonst das
       // Erste, was fehlt - und damit unbrauchbar.
       opts = { ...opts, paths: [sheet.file, ...opts.paths] };
