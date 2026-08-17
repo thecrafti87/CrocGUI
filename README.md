@@ -134,10 +134,13 @@ Schluessel, faellt er automatisch auf Englisch zurueck.
 
 Zwei Details, die beim Bauen wichtig waren:
 
-- **Der Code steht nie in der Prozessliste.** Sowohl beim Senden als auch
+- **Weder Code noch Relay-Passwort stehen in der Prozessliste.** Sowohl beim Senden als auch
   beim Empfangen wandert die Wortgruppe ueber die Umgebungsvariable
-  `CROC_SECRET` zu croc, nicht als Argument. Ein `ps` auf dem Rechner zeigt
-  ihn damit nicht an.
+  `CROC_SECRET` zu croc, nicht als Argument. Dasselbe gilt fuer das
+  Relay-Passwort ueber `CROC_PASS`. Ein `ps` auf dem Rechner zeigt beides
+  nicht an - nachgeprueft an der laufenden Kommandozeile. Beim Code laesst
+  croc auf UNIX ohnehin keinen anderen Weg zu: `--code` wird dort mit dem
+  Hinweis auf `CROC_SECRET` abgelehnt.
 - **`--ignore-stdin` ist gesetzt.** Ohne das haelt croc die geschlossene
   Standardeingabe des Kindprozesses fuer gepipte Daten und wuerde diese statt
   der ausgewaehlten Dateien senden.

@@ -175,12 +175,15 @@ function parseLine(line) {
  * Kommandozeilen bauen
  * ------------------------------------------------------------------ */
 
-/** Globale Flags, die vor dem Unterbefehl stehen muessen. */
+/**
+ * Globale Flags, die vor dem Unterbefehl stehen muessen.
+ * Das Relay-Passwort steht bewusst nicht dabei - es geht ueber CROC_PASS,
+ * damit es nicht in der Prozessliste landet.
+ */
 function globalArgs(cfg) {
   const args = ['--ignore-stdin', '--disable-clipboard'];
   if (cfg.relay) args.push('--relay', cfg.relay);
   if (cfg.relay6) args.push('--relay6', cfg.relay6);
-  if (cfg.pass) args.push('--pass', cfg.pass);
   if (cfg.curve && cfg.curve !== 'p256') args.push('--curve', cfg.curve);
   if (cfg.socks5) args.push('--socks5', cfg.socks5);
   if (cfg.throttleUpload) args.push('--throttleUpload', cfg.throttleUpload);
@@ -262,6 +265,9 @@ class Runner {
     let args;
     const env = { ...process.env };
 
+    // Wie die Code-Wortgruppe: ueber die Umgebung, nicht als Argument.
+    if (cfg.pass) env.CROC_PASS = cfg.pass;
+
     if (kind === 'send') {
       args = buildSend(opts, cfg);
       if (opts.code) env.CROC_SECRET = opts.code;
@@ -270,7 +276,6 @@ class Runner {
       env.CROC_SECRET = opts.code;
     } else if (kind === 'relay') {
       args = buildRelay(opts, cfg);
-      if (cfg.pass) env.CROC_PASS = cfg.pass;
     } else {
       throw new Error(`Unbekannte Betriebsart: ${kind}`);
     }
