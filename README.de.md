@@ -317,6 +317,24 @@ Fassungen veröffentlichen:
 npm version patch && npm run dist -- --publish always
 ```
 
+## Tests
+
+```bash
+npm test
+```
+
+Kein Netz, kein croc, kein Fenster — die Sammlung läuft ohne Aufbau in etwa
+einer Fünftelsekunde durch. Geprüft wird das, woran es tatsächlich schon
+gehakt hat: der Kommandobau (das Relay-Passwort darf nie als Argument
+auftauchen, die Zwischenlagerung ist im Textmodus ausgeschlossen), die
+Auswertung der Ausgabe (crocs zweiter Balken fürs Nachrechnen darf den
+Fortschritt nicht zurücksetzen) und die Prüfsummen an echten Dateien,
+einschließlich der halb übertragenen Datei in richtiger Größe voller Nullen.
+
+Die Übersetzungen werden auf Vollständigkeit geprüft, nicht auf Formulierung:
+alle Schlüssel in allen drei Sprachen, Platzhalter unversehrt, die Hilfe
+überall gleich lang.
+
 ## Zum Aufbau
 
 ```

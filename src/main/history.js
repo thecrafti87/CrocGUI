@@ -41,13 +41,22 @@ function write() {
   }
 }
 
-/** Neuen Eintrag vorne einfuegen; aeltere fallen hinten heraus. */
+/**
+ * Neuen Eintrag vorne einfuegen; aeltere fallen hinten heraus.
+ *
+ * Code und Relay-Passwort werden hier abgestreift, nicht erst beim
+ * Aufrufer. Dass sie nicht auf der Platte landen, soll an einer Stelle
+ * sichergestellt sein statt an jeder, die etwas eintraegt - sonst
+ * genuegt ein vergessenes Feld, um einen festen Kontaktcode im
+ * Klartext abzulegen.
+ */
 function add(entry) {
   load();
+  const { code, pass, ...rest } = entry;
   cache.unshift({
     id: `${Date.now()}-${Math.round(Math.random() * 1e6)}`,
     at: new Date().toISOString(),
-    ...entry
+    ...rest
   });
   if (cache.length > LIMIT) cache.length = LIMIT;
   write();

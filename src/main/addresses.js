@@ -65,4 +65,4 @@ function preferred() {
   return all.find((a) => a.family === 4) || all[0] || null;
 }
 
-module.exports = { local, preferred };
+module.exports = { local, preferred, kindOf };

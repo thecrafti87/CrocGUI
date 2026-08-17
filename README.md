@@ -301,6 +301,22 @@ Publishing a release:
 npm version patch && npm run dist -- --publish always
 ```
 
+## Tests
+
+```bash
+npm test
+```
+
+No network, no croc, no window — the suite runs headless in about a fifth of a
+second. It covers the places that have actually gone wrong: the command builder
+(the relay password must never appear as an argument, parking is refused in text
+mode), the parser (croc's second progress bar for its own hash check must not
+reset the first), and the checksums against real files on disk, including a
+half-transferred file of the right size filled with zeros.
+
+Translations are checked for completeness rather than wording: every key in all
+three languages, placeholders intact, the help equally long everywhere.
+
 ## Layout
 
 ```

@@ -406,4 +406,9 @@ class Runner {
   }
 }
 
-module.exports = { detect, Runner, parseLine, segments, clean };
+module.exports = {
+  detect, Runner, parseLine, segments, clean,
+  // Der Kommandobau ist die Stelle, an der schon zweimal etwas
+  // durchgerutscht ist; nach aussen gegeben, damit Tests ihn pruefen.
+  globalArgs, buildSend, buildReceive, buildRelay
+};
