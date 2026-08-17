@@ -91,6 +91,7 @@ function applyLang() {
   renderHistory();
   renderFinder();
   renderDiag();
+  renderHelp();
   if (!$('#relayLog').dataset.fresh) $('#relayLog').textContent = T('relay.logEmpty');
   if (!editingId) $('#contactFoldTitle').textContent = T('contacts.new');
   gradeCode();
@@ -877,10 +878,26 @@ async function persist(patch) {
   state.settings = await api.setSettings(patch);
 }
 
+// croc stuerzt bei einem unlesbaren Wert mit einer Go-Panik ab - "500KB"
+// reicht dafuer schon. Also gar nicht erst speichern.
+const THROTTLE_OK = /^$|^\d+(\.\d+)?[kKmMgG]?$/;
+
+function throttleValid() {
+  const value = $('#setThrottle').value.trim();
+  const good = THROTTLE_OK.test(value);
+  $('#throttleNote').textContent = good ? '' : T('set.throttleBad');
+  $('#throttleNote').dataset.tone = good ? '' : 'bad';
+  $('#setThrottle').classList.toggle('is-bad', !good);
+  return good;
+}
+
 FIELDS.forEach(([sel, key, prop]) => {
   const node = $(sel);
   const evt = prop === 'checked' || node.tagName === 'SELECT' ? 'change' : 'input';
-  node.addEventListener(evt, () => persist({ [key]: node[prop] }));
+  node.addEventListener(evt, () => {
+    if (sel === '#setThrottle' && !throttleValid()) return;
+    persist({ [key]: node[prop] });
+  });
 });
 
 $('#relayPorts').addEventListener('input', () => persist({ relayPorts: $('#relayPorts').value }));
@@ -1019,6 +1036,23 @@ api.onManifestResult(({ id, result }) => {
   }
   if (!line.isConnected) job.el.append(line);
 });
+
+/* ------------------------------ Hilfe ------------------------------ */
+
+function renderHelp() {
+  const box = $('#helpBody');
+  box.textContent = '';
+  const sections = (typeof HELP !== 'undefined' && HELP[state.lang]) || [];
+
+  sections.forEach((sec, i) => {
+    const art = el('section', 'guide__part');
+    art.style.animationDelay = `${Math.min(i, 9) * 25}ms`;
+    art.append(el('h2', 'guide__title', sec.title));
+    sec.body.forEach((p) => art.append(el('p', null, p)));
+    if (sec.note) art.append(el('p', 'guide__note', sec.note));
+    box.append(art);
+  });
+}
 
 /* ---------------------------- Selbsttest ---------------------------- */
 

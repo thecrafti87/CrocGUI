@@ -62,6 +62,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
       <span data-i18n="nav.settings">Settings</span>
     </button>
+    <button class="rail__item" data-view="help" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.2-2.6 3.9"/><circle cx="12" cy="17.4" r="1" fill="currentColor" stroke="none"/></svg>
+      <span data-i18n="nav.help">Help</span>
+    </button>
     <div class="rail__mark">thecrafti87</div>
   </nav>
 
@@ -277,6 +281,17 @@
       <pre class="console" id="relayLog" aria-live="polite"></pre>
     </section>
 
+    <!-- ============================== HELP ============================ -->
+    <section class="view" id="view-help">
+      <div class="ghost">?</div>
+      <div class="head">
+        <p class="kicker" data-i18n="help.kicker"></p>
+        <h1 data-i18n="help.title"></h1>
+        <p class="lede" data-i18n="help.lede"></p>
+      </div>
+      <div class="guide" id="helpBody"></div>
+    </section>
+
     <!-- ============================ SETTINGS ========================== -->
     <section class="view" id="view-settings">
       <div class="ghost">CFG</div>
@@ -344,6 +359,7 @@
         <label class="lbl">
           <span data-i18n="set.throttle"></span><em data-i18n="set.throttleHint"></em>
           <input class="field mono" id="setThrottle" type="text" data-i18n-ph="set.throttlePlaceholder" spellcheck="false">
+          <p class="hint" id="throttleNote"></p>
         </label>
 
         <label class="lbl">
@@ -396,6 +412,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="i18n.js"></script>
+<script src="help.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

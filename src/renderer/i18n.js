@@ -28,6 +28,12 @@ const I18N = {
     'nav.relay': 'Relay',
     'nav.settings': 'Settings',
 
+    'nav.help': 'Help',
+    'help.kicker': '07 · how it works',
+    'help.title': 'Help',
+    'help.lede': 'What the app does, and where the tool underneath has its edges.',
+    'set.throttleBad': 'Only a number with an optional k, M or G — for example 500k or 2M. croc crashes on anything else, so this is not saved.',
+
     'send.kicker': '01 · outgoing',
     'send.title': 'Send',
     'send.lede': 'Drop the files, pass on the code, done. Encrypted end to end, with no cloud in between.',
@@ -203,7 +209,7 @@ const I18N = {
     'hist.checkOk': '{0} files verified',
     'hist.checkBad': '{0} of {1} verified — {2} wrong, {3} missing',
 
-    'set.kicker': '06 · basics',
+    'set.kicker': '08 · basics',
     'set.title': 'Settings',
     'set.lede': 'Applies to every transfer. Saved right away.',
     'set.language': 'Language',
@@ -346,6 +352,12 @@ const I18N = {
     'nav.contacts': 'Kontakte',
     'nav.relay': 'Relay',
     'nav.settings': 'Einstellungen',
+
+    'nav.help': 'Hilfe',
+    'help.kicker': '07 · wie es arbeitet',
+    'help.title': 'Hilfe',
+    'help.lede': 'Was die App tut — und wo das Werkzeug darunter seine Kanten hat.',
+    'set.throttleBad': 'Nur eine Zahl mit optionalem k, M oder G — etwa 500k oder 2M. Bei allem anderen stürzt croc ab, deshalb wird das nicht gespeichert.',
 
     'send.kicker': '01 · ausgehend',
     'send.title': 'Senden',
@@ -522,7 +534,7 @@ const I18N = {
     'hist.checkOk': '{0} Dateien geprüft',
     'hist.checkBad': '{0} von {1} geprüft — {2} falsch, {3} fehlen',
 
-    'set.kicker': '06 · Grundlagen',
+    'set.kicker': '08 · Grundlagen',
     'set.title': 'Einstellungen',
     'set.lede': 'Gilt für alle Übertragungen. Wird sofort gespeichert.',
     'set.language': 'Sprache',
@@ -665,6 +677,12 @@ const I18N = {
     'nav.contacts': 'Contacts',
     'nav.relay': 'Relais',
     'nav.settings': 'Réglages',
+
+    'nav.help': 'Aide',
+    'help.kicker': '07 · comment ça marche',
+    'help.title': 'Aide',
+    'help.lede': 'Ce que fait l’application — et où l’outil sous-jacent montre ses limites.',
+    'set.throttleBad': 'Uniquement un nombre suivi éventuellement de k, M ou G — par exemple 500k ou 2M. croc plante sur tout le reste, ce n’est donc pas enregistré.',
 
     'send.kicker': '01 · sortant',
     'send.title': 'Envoyer',
@@ -841,7 +859,7 @@ const I18N = {
     'hist.checkOk': '{0} fichiers vérifiés',
     'hist.checkBad': '{0} sur {1} vérifiés — {2} erronés, {3} manquants',
 
-    'set.kicker': '06 · bases',
+    'set.kicker': '08 · bases',
     'set.title': 'Réglages',
     'set.lede': 'Vaut pour tous les transferts. Enregistré immédiatement.',
     'set.language': 'Langue',

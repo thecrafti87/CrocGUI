@@ -107,8 +107,15 @@ und sie landen in der Sendeliste. Wer es kuerzer will, richtet unter
 *Einstellungen* den Finder-Kurzbefehl ein; der steht dann als eigener
 Eintrag unter *Kurzbefehle* im Kontextmenue.
 
+**Hilfe** — Ein eigener Reiter erklaert die App in der eingestellten
+Sprache: was jeder Bereich tut und wo croc seine Kanten hat. Die Texte
+liegen in `src/renderer/help.js`, je Sprache als Abschnitte mit
+hervorgehobenen Hinweisen.
+
 **Einstellungen** — Relay-Adresse und -Passwort, Verschluesselungskurve,
-Standard-Zielordner, Pruefsummen-Verfahren, Upload-Drosselung, SOCKS5-Proxy.
+Standard-Zielordner, Pruefsummen-Verfahren, Upload-Drosselung (nur Zahl
+mit k, M oder G - bei allem anderen stuerzt croc mit einer Go-Panik ab,
+deshalb wird ein unlesbarer Wert gar nicht erst gespeichert), SOCKS5-Proxy.
 Wird sofort gespeichert, unter
 `~/Library/Application Support/croc-gui/settings.json`.
 
