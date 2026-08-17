@@ -176,10 +176,26 @@ Einzurichten ist nichts: croc ist dabei, ein Relay ist voreingestellt,
 der Zielordner ist "Downloads".
 
 Die einzige Huerde ist der erste Start. Weil die App nicht signiert ist,
-verweigert macOS sie zunaechst: Rechtsklick auf die App, dann *Oeffnen*,
-im Dialog nochmal *Oeffnen*. Danach nie wieder. Die App kann sich das
-nicht selbst erlauben - genau davon lebt der Schutz. Nur eine
-Apple-Developer-ID nimmt diese Huerde weg.
+blockiert macOS sie. Der frueher uebliche Rechtsklick auf die App und
+dann *Oeffnen* hilft seit macOS 15 nicht mehr - Apple hat diesen Weg
+entfernt.
+
+So geht es heute:
+
+1. App starten, die Meldung mit *Fertig* schliessen
+2. *Systemeinstellungen -> Datenschutz & Sicherheit* oeffnen
+3. Ganz nach unten scrollen, bei "CrocGUI wurde blockiert" auf
+   *Trotzdem oeffnen* klicken und bestaetigen
+
+Schneller im Terminal, ohne Administratorkennwort:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/CrocGUI.app
+```
+
+Beides ist nur einmal noetig. Die App kann sich das nicht selbst
+erlauben - genau davon lebt der Schutz. Nur eine Apple-Developer-ID
+nimmt die Huerde fuer alle weg.
 
 ## Zu den Aktualisierungen
 

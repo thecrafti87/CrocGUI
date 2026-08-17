@@ -80,8 +80,11 @@ const HELP = {
       title: 'First start',
       body: [
         'Nothing needs configuring: croc is included, a relay is preset, the target folder is Downloads.',
-        'The one hurdle is the first launch. Because the app is not signed, macOS refuses it: right-click the app, choose Open, then Open again in the dialog. After that, never again. The app cannot grant itself that — which is the entire point of the protection.'
-      ]
+        'The one hurdle is the first launch. Because the app is not signed, macOS blocks it. The old right-click → Open trick stopped working with macOS 15 — Apple removed that route.',
+        'What works today: launch the app, dismiss the message with Done, then open System Settings → Privacy & Security, scroll to the bottom and click Open Anyway next to "CrocGUI was blocked".',
+        'Faster in a terminal: xattr -dr com.apple.quarantine /Applications/CrocGUI.app — after that the app starts normally. Either way, only once.'
+      ],
+      note: 'The app cannot grant itself that, which is the entire point of the protection. Only an Apple Developer ID removes the hurdle for everyone — the same one that would unlock silent self-updating.'
     }
   ],
 
@@ -153,8 +156,11 @@ const HELP = {
       title: 'Erster Start',
       body: [
         'Einzurichten ist nichts: croc ist dabei, ein Relay ist voreingestellt, der Zielordner ist „Downloads".',
-        'Die einzige Hürde ist der allererste Start. Weil die App nicht signiert ist, verweigert macOS sie: Rechtsklick auf die App, dann Öffnen, im Dialog nochmal Öffnen. Danach nie wieder. Die App kann sich das nicht selbst erlauben — genau davon lebt der Schutz.'
-      ]
+        'Die einzige Hürde ist der allererste Start. Weil die App nicht signiert ist, blockiert macOS sie. Der früher übliche Rechtsklick → Öffnen hilft seit macOS 15 nicht mehr — Apple hat diesen Weg entfernt.',
+        'So geht es heute: App starten, die Meldung mit „Fertig" schließen, dann Systemeinstellungen → Datenschutz & Sicherheit öffnen, ganz nach unten scrollen und bei „CrocGUI wurde blockiert" auf „Trotzdem öffnen" klicken.',
+        'Schneller geht es im Terminal: xattr -dr com.apple.quarantine /Applications/CrocGUI.app — danach startet die App normal. Beides ist nur einmal nötig.'
+      ],
+      note: 'Die App kann sich das nicht selbst erlauben, genau davon lebt der Schutz. Nur eine Apple-Developer-ID nimmt die Hürde für alle weg — dieselbe, die auch das stille Selbstaktualisieren freischalten würde.'
     }
   ],
 
@@ -226,8 +232,11 @@ const HELP = {
       title: 'Premier démarrage',
       body: [
         'Rien à configurer : croc est inclus, un relais est prédéfini, le dossier de destination est « Téléchargements ».',
-        'Le seul obstacle est le tout premier lancement. Comme l’application n’est pas signée, macOS la refuse : clic droit sur l’application, puis Ouvrir, puis Ouvrir à nouveau dans la boîte de dialogue. Ensuite, plus jamais. L’application ne peut pas se l’autoriser elle-même — c’est tout l’intérêt de la protection.'
-      ]
+        'Le seul obstacle est le tout premier lancement. Comme l’application n’est pas signée, macOS la bloque. L’ancienne astuce du clic droit → Ouvrir ne fonctionne plus depuis macOS 15 — Apple a supprimé cette voie.',
+        'Ce qui marche aujourd’hui : lancez l’application, fermez le message avec Terminé, puis ouvrez Réglages Système → Confidentialité et sécurité, descendez tout en bas et cliquez sur Ouvrir quand même à côté de « CrocGUI a été bloqué ».',
+        'Plus rapide en terminal : xattr -dr com.apple.quarantine /Applications/CrocGUI.app — ensuite l’application démarre normalement. Dans les deux cas, une seule fois.'
+      ],
+      note: 'L’application ne peut pas se l’autoriser elle-même, c’est tout l’intérêt de la protection. Seul un identifiant Apple Developer lève l’obstacle pour tout le monde — le même qui débloquerait la mise à jour silencieuse.'
     }
   ]
 };
