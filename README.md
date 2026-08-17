@@ -211,6 +211,12 @@ croc gibt stattdessen einen Browser-Link, ein Token fuer die
 Kommandozeile und eine Kennung zum Widerrufen aus. Nur damit kommt
 jemand an die Daten - der Code im Sendefenster nuetzt hier nichts.
 
+Abgeholt wird eine Zwischenlagerung, indem das Token ins selbe Feld
+kommt wie sonst die Code-Wortgruppe - das funktioniert, weil die App
+alles ueber `CROC_SECRET` weiterreicht. Als Argument nimmt croc so ein
+Token bewusst nicht an: der Schluessel steckt darin und stuende sonst in
+der Prozessliste.
+
 Die App zeigt diese drei Angaben deshalb gross an der Uebertragungskarte,
 mit Knoepfen zum Kopieren, zum Oeffnen im Browser und zum Widerrufen. Und
 sie merkt sie sich im Verlauf: waeren sie nur in der Karte, waeren die

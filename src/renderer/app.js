@@ -575,13 +575,26 @@ $('#recvPick').addEventListener('click', async () => {
   if (dir) $('#recvOut').value = dir;
 });
 
+/**
+ * Aus der Zwischenablage kommt oft eine ganze Befehlszeile, so wie croc
+ * sie vorschlaegt. Wir holen daraus heraus, was zaehlt.
+ */
+function cleanPasted(raw) {
+  const text = String(raw).trim();
+  const fromEnv = text.match(/(?:CROC_SECRET|CROC_STORE_TOKEN)\s*=\s*['"]?([^'"\s]+)/);
+  if (fromEnv) return fromEnv[1];
+  return text
+    .replace(/^croc\s+/i, '')
+    .replace(/\s+croc$/i, '')
+    .replace(/^['"]|['"]$/g, '')
+    .trim();
+}
+
 $('#recvPaste').addEventListener('click', async () => {
   try {
     const text = await navigator.clipboard.readText();
     if (text) {
-      $('#recvCode').value = text.trim()
-        .replace(/^croc\s+/, '')
-        .replace(/^CROC_SECRET="?|"?\s*croc$/g, '');
+      $('#recvCode').value = cleanPasted(text);
       $('#recvCode').focus();
     }
   } catch {
