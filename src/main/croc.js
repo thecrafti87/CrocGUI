@@ -59,6 +59,11 @@ async function detect(force = false) {
   const configured = settings.load().crocPath;
   if (configured) tried.push(configured);
 
+  // Selbst geholtes croc kommt vor dem mitgelieferten.
+  let managed = null;
+  try { managed = require('./crocupdate').managed(); } catch { managed = null; }
+  if (managed) tried.push(managed);
+
   const bundled = bundledPath();
   if (bundled) tried.push(bundled);
 
@@ -79,12 +84,16 @@ async function detect(force = false) {
     }
     const version = await versionOf(bin);
     if (version) {
-      resolved = { ok: true, path: bin, version, bundled: bin === bundled };
+      resolved = {
+        ok: true, path: bin, version,
+        bundled: bin === bundled,
+        managed: bin === managed
+      };
       return resolved;
     }
   }
 
-  resolved = { ok: false, path: null, version: null, bundled: false };
+  resolved = { ok: false, path: null, version: null, bundled: false, managed: false };
   return resolved;
 }
 

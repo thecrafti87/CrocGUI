@@ -31,7 +31,8 @@
 
 <div class="banner" id="updateBanner" hidden>
   <span class="banner__text" id="updateText"></span>
-  <button class="btn btn--sm btn--go" id="updateOpen" type="button"></button>
+  <button class="btn btn--sm btn--go" id="updateInstall" type="button"></button>
+  <button class="btn btn--sm btn--ghost" id="updateOpen" type="button"></button>
   <button class="banner__x" id="updateClose" type="button" aria-label="close">&times;</button>
 </div>
 
@@ -317,6 +318,8 @@
             <input class="field mono" id="setCrocPath" type="text" placeholder="/usr/local/bin/croc" spellcheck="false">
             <button class="btn btn--ghost btn--sm" id="setCrocPick" type="button" data-i18n="set.choose"></button>
             <button class="btn btn--ghost btn--sm" id="setCrocDetect" type="button" data-i18n="set.search"></button>
+            <button class="btn btn--ghost btn--sm" id="crocUpdate" type="button" data-i18n="croc.updateBtn"></button>
+            <button class="btn btn--ghost btn--sm is-hidden" id="crocBundled" type="button" data-i18n="croc.useBundled"></button>
           </div>
         </label>
 

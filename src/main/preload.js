@@ -31,6 +31,17 @@ contextBridge.exposeInMainWorld('croc', {
     return () => ipcRenderer.removeListener('manifest:result', handler);
   },
 
+  canSelfUpdate: () => ipcRenderer.invoke('update:can'),
+  fetchUpdate: () => ipcRenderer.invoke('update:fetch'),
+  applyUpdate: () => ipcRenderer.invoke('update:apply'),
+  updateCroc: () => ipcRenderer.invoke('croc:update'),
+  useBundledCroc: () => ipcRenderer.invoke('croc:useBundled'),
+  onUpdateProgress: (fn) => {
+    const handler = (_e, p) => fn(p);
+    ipcRenderer.on('update:progress', handler);
+    return () => ipcRenderer.removeListener('update:progress', handler);
+  },
+
   revokeStore: (receipt) => ipcRenderer.invoke('store:revoke', receipt),
 
   runDiagnose: () => ipcRenderer.invoke('diag:run'),

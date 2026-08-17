@@ -21,6 +21,7 @@ const state = {
   crocInfo: null,
   update: null,
   crocLatest: null,
+  canSelfUpdate: false,
   history: [],
   finder: false,
   diag: null
@@ -920,6 +921,25 @@ $('#setCrocPick').addEventListener('click', async () => {
 
 $('#setCrocDetect').addEventListener('click', () => detectCroc(true));
 
+$('#crocUpdate').addEventListener('click', async () => {
+  const btn = $('#crocUpdate');
+  btn.disabled = true;
+  const res = await api.updateCroc();
+  btn.disabled = false;
+  sumLine('');
+  if (!res.ok) { toast(T('croc.updateFailed', res.message || ''), 'bad'); return; }
+  toast(T('croc.updated', res.version), 'good');
+  await detectCroc(true);
+  await checkCrocLatest();
+});
+
+$('#crocBundled').addEventListener('click', async () => {
+  await api.useBundledCroc();
+  toast(T('croc.backToBundled'));
+  await detectCroc(true);
+  await checkCrocLatest();
+});
+
 function renderCrocStatus() {
   const badge = $('#binStatus');
   const text = $('.chrome__statusText', badge);
@@ -931,7 +951,10 @@ function renderCrocStatus() {
     return;
   }
   if (info.ok) {
-    const source = T(info.bundled ? 'set.crocBundled' : 'set.crocSystem');
+    const source = info.managed
+      ? T('set.crocManaged', info.version)
+      : T(info.bundled ? 'set.crocBundled' : 'set.crocSystem');
+    $('#crocBundled').classList.toggle('is-hidden', !info.managed);
     badge.dataset.state = 'ok';
     text.textContent = `croc ${info.version}`;
     badge.title = `${info.path}\n${source}`;
@@ -1312,6 +1335,7 @@ function renderUpdate() {
     line.textContent = T('update.available', res.latest, res.current);
     $('#updateText').textContent = T('update.available', res.latest, res.current);
     $('#updateOpen').textContent = T('update.download');
+    $('#updateInstall').textContent = T('update.install');
   } else {
     line.textContent = T('update.current', res.current);
   }
@@ -1328,6 +1352,46 @@ async function checkUpdate() {
 }
 
 $('#updateClose').addEventListener('click', () => { $('#updateBanner').hidden = true; });
+
+/* Herunterladen und neu starten, statt nur die Seite zu oeffnen. */
+
+api.onUpdateProgress((p) => {
+  const pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
+  const key = p.croc ? 'croc.updating' : (p.phase === 'unpack' ? 'update.unpacking' : 'update.loading');
+  const text = p.phase === 'unpack' && !p.croc ? T('update.unpacking') : T(key, pct);
+  if (p.croc) sumLine(text);
+  else $('#updateText').textContent = text;
+});
+
+async function refreshUpdateButton() {
+  const can = await api.canSelfUpdate();
+  state.canSelfUpdate = Boolean(can.ok);
+  $('#updateInstall').hidden = !can.ok;
+  $('#updateOpen').classList.toggle('btn--go', !can.ok);
+  $('#updateOpen').classList.toggle('btn--ghost', can.ok);
+}
+
+$('#updateInstall').addEventListener('click', async () => {
+  const btn = $('#updateInstall');
+  btn.disabled = true;
+  const res = await api.fetchUpdate();
+  if (!res.ok) {
+    btn.disabled = false;
+    const map = {
+      size: 'update.failedSize',
+      version: 'update.failedVersion',
+      'read-only': 'update.failedPlace',
+      dev: 'update.failedPlace',
+      'no-bundle': 'update.failedPlace'
+    };
+    const key = map[res.reason] || 'update.failedGeneric';
+    toast(T(key, res.message || ''), 'bad');
+    renderUpdate();
+    return;
+  }
+  $('#updateText').textContent = T('update.ready', res.version);
+  await api.applyUpdate();
+});
 
 /* ------------------------------ Menue ------------------------------ */
 
@@ -1363,6 +1427,7 @@ api.onMenu(async (action) => {
   applyLang();
 
   await detectCroc(false);
+  refreshUpdateButton();
   if (values.autoUpdate) {
     checkUpdate();
     checkCrocLatest();

@@ -210,8 +210,31 @@ croc-Fassung mit der neuesten Veroeffentlichung ab und schreibt das
 Ergebnis unter *Einstellungen* — ist croc dort weiter, weisst du, dass sich
 ein neuer Build lohnt.
 
-CrocGUI aktualisiert sich **nicht selbst**. Stilles Selbstaktualisieren
-setzt auf macOS eine mit einer Apple-Developer-ID signierte und notarisierte
+Seit 1.8.0 laedt die App eine neue Fassung auf Knopfdruck selbst herunter,
+tauscht sich aus und startet neu - ohne Signatur. electron-updater kann
+das nicht, weil dessen Weg ueber Squirrel die Signatur prueft; der Tausch
+von Hand geht trotzdem. Angenehmer Nebeneffekt: was die App selbst
+herunterlaedt, bekommt kein Quarantaene-Merkmal, die neue Fassung startet
+also ohne Gatekeeper-Meldung.
+
+Was dabei NICHT geschieht: eine kryptografische Pruefung der Herkunft.
+Ohne Signatur stuetzt sich das Vertrauen auf HTTPS und GitHub - dasselbe
+wie beim Herunterladen von Hand. Geprueft werden Groesse und
+Fassungsnummer im Paket; stimmt etwas nicht, bleibt alles unveraendert.
+Das alte Paket wird beim Tausch erst beiseite geschoben und nur bei
+Erfolg geloescht.
+
+## croc aktualisieren
+
+Unter *Einstellungen* holt ein Knopf die neueste croc-Fassung und legt
+sie neben die Einstellungen. Von da an wird sie bevorzugt benutzt, ohne
+das mitgelieferte croc anzuruehren - ein zweiter Knopf schaltet zurueck.
+
+## Was Signieren zusaetzlich braechte
+
+Ein stilles Aktualisieren ohne Zutun sowie den Wegfall der
+Gatekeeper-Huerde beim allerersten Start. Beides setzt auf macOS eine mit
+einer Apple-Developer-ID signierte und notarisierte
 App voraus — Squirrel.Mac verweigert sonst das Einspielen. Sobald ein
 Signaturzertifikat vorliegt, laesst sich `electron-updater` ergaenzen; die
 Veroeffentlichung ueber `electron-builder --publish` ist in `package.json`

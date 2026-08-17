@@ -17,6 +17,8 @@ const history = require('./history');
 const quickaction = require('./quickaction');
 const diagnose = require('./diagnose');
 const manifest = require('./manifest');
+const selfupdate = require('./selfupdate');
+const crocupdate = require('./crocupdate');
 const { detect, Runner } = require('./croc');
 
 let win = null;
@@ -463,6 +465,46 @@ ipcMain.handle('settings:set', (_e, patch) => {
 
 ipcMain.handle('history:list', () => history.withExistence(history.load()));
 ipcMain.handle('history:clear', () => history.clear());
+
+/* Selbstaktualisierung */
+
+let prepared = null;
+
+ipcMain.handle('update:can', () => selfupdate.canReplace());
+
+ipcMain.handle('update:fetch', async () => {
+  try {
+    const res = await selfupdate.prepare((p) => {
+      if (win && !win.isDestroyed()) win.webContents.send('update:progress', p);
+    });
+    prepared = res.ok ? res : null;
+    return res;
+  } catch (err) {
+    prepared = null;
+    return { ok: false, reason: 'error', message: err.message };
+  }
+});
+
+ipcMain.handle('update:apply', () => {
+  if (!prepared) return { ok: false };
+  return selfupdate.install(prepared);
+});
+
+/* croc selbst aktualisieren */
+
+ipcMain.handle('croc:update', async () => {
+  const res = await crocupdate.install((p) => {
+    if (win && !win.isDestroyed()) win.webContents.send('update:progress', { ...p, croc: true });
+  });
+  if (res.ok) await detect(true);
+  return res;
+});
+
+ipcMain.handle('croc:useBundled', async () => {
+  const done = crocupdate.remove();
+  await detect(true);
+  return { ok: done };
+});
 
 /* Zwischenlagerung widerrufen */
 
