@@ -97,6 +97,7 @@ function applyLang() {
   if (!editingId) $('#contactFoldTitle').textContent = T('contacts.new');
   gradeCode();
   syncSendContact();
+  syncStoreOption();
   state.jobs.forEach((job) => refreshJobLabels(job));
 }
 
@@ -213,7 +214,19 @@ $('#sendMode').addEventListener('click', (e) => {
   $$('.seg__btn', $('#sendMode')).forEach((b) => b.classList.toggle('is-on', b === btn));
   $('#paneFiles').classList.toggle('is-hidden', sendMode !== 'files');
   $('#paneText').classList.toggle('is-hidden', sendMode !== 'text');
+  syncStoreOption();
 });
+
+/**
+ * Zwischenlagerung gibt es nur fuer Dateien - croc weist sie fuer Text
+ * ab. Also im Textmodus abschalten, statt in den Fehler laufen zu lassen.
+ */
+function syncStoreOption() {
+  const text = sendMode === 'text';
+  ['#optStore', '#optStoreDownloads', '#optStoreExp'].forEach((sel) => { $(sel).disabled = text; });
+  $('#optStore').closest('.lbl').classList.toggle('is-off', text);
+  $('#storeNote').textContent = text ? T('send.storeNoText') : '';
+}
 
 /* -------------------------- Auftragskarten -------------------------- */
 
@@ -543,7 +556,7 @@ $('#sendStart').addEventListener('click', async () => {
     git: $('#optGit').checked,
     noLocal: $('#optNoLocal').checked,
     exclude: $('#optExclude').value.trim(),
-    store: $('#optStore').checked,
+    store: $('#optStore').checked && sendMode !== 'text',
     storeDownloads: $('#optStoreDownloads').value,
     storeExpiration: $('#optStoreExp').value.trim()
   };

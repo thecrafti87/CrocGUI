@@ -56,7 +56,7 @@ Gegenstelle und ein QR-Code. Pro Übertragung einstellbar: eigener Code, Ordner
 vorher zippen, `.gitignore` beachten, Dateien ausschließen, Zwischenlagerung
 beim Anbieter.
 
-**Text** — Statt Dateien lässt sich auch reiner Text senden. Der kommt nicht als
+**Text** — Statt Dateien lässt sich auch reiner Text senden. Die Zwischenlagerung steht dafür nicht zur Verfügung; croc lagert nur echte Dateien, deshalb ist der Haken im Textmodus gesperrt. Der kommt nicht als
 Datei an, sondern wird auf der Empfangskarte angezeigt, mit Knopf zum Kopieren.
 Ein Hinweis unter dem Feld sagt, dass croc den Text als Argument entgegennimmt —
 er ist darum kurzzeitig in der Prozessliste des sendenden Rechners sichtbar. Für

@@ -219,7 +219,9 @@ function buildSend(opts, cfg) {
   if (opts.exclude) args.push('--exclude', opts.exclude);
   if (opts.excludeFile) args.push('--exclude-file', opts.excludeFile);
 
-  if (opts.store) {
+  // croc erlaubt die Zwischenlagerung nur fuer echte Dateien:
+  // "stored mode supports regular file arguments only".
+  if (opts.store && opts.mode !== 'text') {
     args.push('--store');
     if (opts.storeDownloads) args.push('--store-downloads', String(opts.storeDownloads));
     if (opts.storeExpiration) args.push('--store-expiration', opts.storeExpiration);

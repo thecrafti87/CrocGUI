@@ -1578,3 +1578,5 @@ select.field {
 .field.is-bad:focus { box-shadow: 0 0 0 3px rgba(255, 111, 94, .14); }
 
 .btn.is-hidden, .banner button[hidden] { display: none; }
+
+.lbl.is-off > span:first-child, .lbl.is-off .switch { opacity: .45; }

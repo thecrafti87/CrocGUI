@@ -54,7 +54,7 @@ copy the code, copy the ready-made command for the other side, and a QR code.
 Per transfer: a custom code, zip folders first, respect `.gitignore`, exclude
 files, park the transfer at the provider.
 
-**Text** — Plain text can be sent instead of files. It does not arrive as a
+**Text** — Plain text can be sent instead of files. Parking at the provider is not available for text; croc only parks regular files, so the option is disabled there. It does not arrive as a
 file; the receiving card displays it with a copy button. A note under the field
 says that croc takes the text as an argument, so it is briefly visible in the
 sending machine’s process list. For a secret, send a file.
