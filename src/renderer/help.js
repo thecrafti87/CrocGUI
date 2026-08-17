@@ -54,6 +54,16 @@ const HELP = {
       note: 'When both machines are on the same network, croc connects them directly and the relay only brokers the introduction. The files then never touch it.'
     },
     {
+      title: 'Setting up your own relay',
+      body: [
+        'A relay opens five ports, not one: 9009 arranges the introduction, 9010–9013 carry the data. Forwarding only the first gives a handshake and then silence.',
+        'Same network: nothing to configure. Start the relay, read the address off the Relay tab, enter it on the other side. This is also the fastest route.',
+        'From anywhere: the simplest answer is a VPN such as Tailscale. Both machines then sit in the same virtual network, you use the VPN address, and no router, port forwarding or dynamic DNS is involved. The Relay tab marks such an address as “works from anywhere”.',
+        'Over the plain internet: this needs a public address and all five ports forwarded to this machine. Many cable and mobile connections share one address between hundreds of customers (carrier NAT) — there, forwarding cannot help at all. A home address usually also changes daily, which makes a dynamic DNS name necessary.'
+      ],
+      note: 'The machine running the relay has to stay awake. And a relay makes nothing faster — the limit is your upload, which sits before the relay, not behind it. Its value is confidentiality, fixed contact codes and messages.'
+    },
+    {
       title: 'Parking at the provider',
       body: [
         'With this option the files are uploaded encrypted and wait there, for a lifetime and a number of downloads you set. The other side does not have to be online at the same time.',
@@ -130,6 +140,16 @@ const HELP = {
       note: 'Sind beide Rechner im selben Netz, verbindet croc sie direkt und das Relay vermittelt nur die Bekanntschaft. Die Dateien berühren es dann gar nicht.'
     },
     {
+      title: 'Ein eigenes Relay einrichten',
+      body: [
+        'Ein Relay öffnet fünf Ports, nicht einen: 9009 vermittelt die Bekanntschaft, 9010–9013 tragen die Daten. Wer nur den ersten freigibt, bekommt einen Handschlag und danach Stillstand.',
+        'Im selben Netz: nichts einzurichten. Relay starten, die Adresse im Reiter Relay ablesen, auf der Gegenseite eintragen. Das ist auch der schnellste Weg.',
+        'Von überall: am einfachsten über ein VPN wie Tailscale. Beide Rechner sind dann im selben virtuellen Netz, du nimmst die VPN-Adresse, und weder Router noch Portfreigabe noch ein DynDNS-Name sind nötig. Im Reiter Relay ist eine solche Adresse als „von überall erreichbar“ gekennzeichnet.',
+        'Über das offene Internet: dafür braucht es eine öffentliche Adresse und alle fünf Ports auf diesen Rechner weitergeleitet. Bei vielen Kabel- und Mobilfunkanschlüssen teilen sich hunderte Kunden eine Adresse (Trägernetz-NAT) — dort hilft keine Freigabe. Und eine Heimadresse wechselt meist täglich, was einen DynDNS-Namen nötig macht.'
+      ],
+      note: 'Der Rechner mit dem Relay muss wach bleiben. Und ein Relay macht nichts schneller — die Grenze ist dein Upload, und der sitzt vor dem Relay, nicht dahinter. Sein Wert liegt in der Vertraulichkeit, in festen Kontaktcodes und in den Nachrichten.'
+    },
+    {
       title: 'Zwischenlagerung',
       body: [
         'Mit dieser Option werden die Dateien verschlüsselt hochgeladen und warten dort — mit einer Lebensdauer und einer Zahl erlaubter Abrufe, die du festlegst. Die Gegenseite muss nicht gleichzeitig online sein.',
@@ -204,6 +224,16 @@ const HELP = {
         'L’onglet Relais en démarre un sur cette machine. Si les deux côtés saisissent son adresse dans les Réglages, plus rien ne passe par des serveurs étrangers. Un mot de passe de relais tient les inconnus à l’écart — mauvais mot de passe, pas de connexion.'
       ],
       note: 'Si les deux machines sont sur le même réseau, croc les relie directement et le relais ne fait que les présenter. Les fichiers ne le touchent alors jamais.'
+    },
+    {
+      title: 'Installer son propre relais',
+      body: [
+        'Un relais ouvre cinq ports, pas un : 9009 organise la présentation, 9010–9013 transportent les données. N’ouvrir que le premier donne une poignée de main puis le silence.',
+        'Même réseau : rien à configurer. Démarrez le relais, relevez l’adresse dans l’onglet Relais, saisissez-la en face. C’est aussi la voie la plus rapide.',
+        'Depuis partout : le plus simple est un VPN comme Tailscale. Les deux machines sont alors dans le même réseau virtuel, vous utilisez l’adresse VPN, et ni routeur, ni redirection de ports, ni DNS dynamique n’entrent en jeu. L’onglet Relais signale une telle adresse comme « joignable de partout ».',
+        'Par Internet ouvert : il faut une adresse publique et les cinq ports redirigés vers cette machine. Sur beaucoup d’accès câble et mobile, des centaines de clients partagent une adresse (NAT opérateur) — là, aucune redirection n’aide. Et une adresse domestique change souvent chaque jour, ce qui impose un nom DNS dynamique.'
+      ],
+      note: 'La machine qui héberge le relais doit rester éveillée. Et un relais n’accélère rien — la limite est votre débit montant, situé avant le relais, pas après. Son intérêt : la confidentialité, les codes fixes de contacts et les messages.'
     },
     {
       title: 'Dépôt chez le fournisseur',

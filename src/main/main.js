@@ -20,6 +20,7 @@ const manifest = require('./manifest');
 const selfupdate = require('./selfupdate');
 const crocupdate = require('./crocupdate');
 const messenger = require('./messenger');
+const addresses = require('./addresses');
 const { detect, Runner } = require('./croc');
 
 let win = null;
@@ -476,6 +477,8 @@ function messengerEvent(kind, payload) {
     notify(tr('msg.notifyTitle', payload.name), payload.text.slice(0, 180));
   }
 }
+
+ipcMain.handle('net:addresses', () => addresses.local());
 
 ipcMain.handle('msg:start', () => messenger.start(messengerEvent));
 ipcMain.handle('msg:stop', () => messenger.stop());

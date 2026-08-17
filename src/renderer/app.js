@@ -839,6 +839,39 @@ function relayLog(text) {
   box.scrollTop = box.scrollHeight;
 }
 
+/** Zeigt, unter welcher Adresse dieses Relay zu erreichen ist. */
+async function renderRelayAddresses() {
+  const box = $('#relayAddrs');
+  const wrap = $('#relayReach');
+  if (!state.relayId) { wrap.hidden = true; return; }
+
+  const ports = $('#relayPorts').value.trim() || '9009,9010,9011,9012,9013';
+  const first = ports.split(',')[0].trim();
+  const list = await api.addresses();
+
+  box.textContent = '';
+  if (!list.length) { box.append(el('p', 'hint', T('relay.noAddr'))); wrap.hidden = false; return; }
+
+  list.forEach((a) => {
+    const row = el('div', 'reach__row');
+    row.dataset.kind = a.kind;
+    // IPv6 gehoert in eckige Klammern, sonst frisst croc den Port nicht.
+    const full = a.family === 6 ? `[${a.address}]:${first}` : `${a.address}:${first}`;
+    row.append(el('code', 'reach__addr', full));
+    row.append(el('span', 'reach__what',
+      a.kind === 'public' ? T('relay.kindPublic', ports) : T(a.kind === 'vpn' ? 'relay.kindVpn' : 'relay.kindLan')));
+    const copy = el('button', 'btn btn--ghost btn--sm', T('relay.copy'));
+    copy.type = 'button';
+    copy.addEventListener('click', async () => {
+      await api.copy(full);
+      toast(T('relay.copied'), 'good');
+    });
+    row.append(copy);
+    box.append(row);
+  });
+  wrap.hidden = false;
+}
+
 function renderRelayState() {
   const on = Boolean(state.relayId);
   $('#relayState').classList.toggle('is-live', on);
@@ -847,6 +880,7 @@ function renderRelayState() {
   btn.textContent = T(on ? 'relay.stop' : 'relay.start');
   btn.classList.toggle('btn--stop', on);
   btn.classList.toggle('btn--amber', !on);
+  renderRelayAddresses();
 }
 
 function handleRelayEvent(id, event) {
@@ -870,7 +904,12 @@ $('#relayToggle').addEventListener('click', async () => {
   if (!res.ok) { toast(res.message, 'bad'); return; }
   state.relayId = res.id;
   renderRelayState();
-  relayLog(T('relay.logHint', $('#relayPorts').value.trim().split(',')[0]));
+  const ports = $('#relayPorts').value.trim().split(',')[0];
+  const found = await api.addresses();
+  const best = found[0];
+  relayLog(T('relay.logHint', best
+    ? (best.family === 6 ? `[${best.address}]:${ports}` : `${best.address}:${ports}`)
+    : ports));
 });
 
 /* -------------------------- Einstellungen -------------------------- */

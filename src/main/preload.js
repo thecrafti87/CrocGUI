@@ -31,6 +31,8 @@ contextBridge.exposeInMainWorld('croc', {
     return () => ipcRenderer.removeListener('manifest:result', handler);
   },
 
+  addresses: () => ipcRenderer.invoke('net:addresses'),
+
   startMessages: () => ipcRenderer.invoke('msg:start'),
   stopMessages: () => ipcRenderer.invoke('msg:stop'),
   messageState: () => ipcRenderer.invoke('msg:state'),

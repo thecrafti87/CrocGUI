@@ -152,6 +152,23 @@ The search order is:
 The shipped one deliberately comes before the system’s: that keeps the version
 predictable. Anyone wanting their own croc enters the path.
 
+### Your own relay
+
+A relay opens **five ports**, not one: 9009 arranges the introduction, 9010–9013
+carry the data. Forwarding only the first gives a handshake and then silence.
+
+- **Same network** — nothing to configure. Start the relay, read the address off
+  the Relay tab, enter it on the other side. Also the fastest route.
+- **From anywhere** — simplest via a VPN such as Tailscale: both machines sit in
+  the same virtual network, no router, forwarding or dynamic DNS involved. The
+  Relay tab marks such an address as “works from anywhere”.
+- **Over the plain internet** — needs a public address and all five ports
+  forwarded. Many cable and mobile connections share one address between
+  hundreds of customers (carrier NAT), where forwarding cannot help at all.
+
+The machine hosting the relay has to stay awake. And a relay makes nothing
+faster — the limit is your upload, which sits before the relay, not behind it.
+
 ## Checksums
 
 When sending, the app attaches a list of SHA-256 sums per file

@@ -161,6 +161,25 @@ Die Suche läuft in dieser Reihenfolge:
 Das mitgelieferte kommt bewusst vor dem des Systems: so ist die Fassung
 vorhersagbar. Wer sein eigenes croc will, trägt den Pfad ein.
 
+### Ein eigenes Relay
+
+Ein Relay öffnet **fünf Ports**, nicht einen: 9009 vermittelt die Bekanntschaft,
+9010–9013 tragen die Daten. Wer nur den ersten freigibt, bekommt einen
+Handschlag und danach Stillstand.
+
+- **Im selben Netz** — nichts einzurichten. Relay starten, die Adresse im Reiter
+  Relay ablesen, auf der Gegenseite eintragen. Auch der schnellste Weg.
+- **Von überall** — am einfachsten über ein VPN wie Tailscale: beide Rechner
+  liegen im selben virtuellen Netz, kein Router, keine Portfreigabe, kein
+  DynDNS. Im Reiter Relay ist eine solche Adresse als „von überall erreichbar“
+  gekennzeichnet.
+- **Über das offene Internet** — braucht eine öffentliche Adresse und alle fünf
+  Ports weitergeleitet. Bei vielen Kabel- und Mobilfunkanschlüssen teilen sich
+  hunderte Kunden eine Adresse (Trägernetz-NAT); dort hilft keine Freigabe.
+
+Der Rechner mit dem Relay muss wach bleiben. Und ein Relay macht nichts
+schneller — die Grenze ist dein Upload, und der sitzt vor dem Relay.
+
 ## Prüfsummen
 
 Beim Senden legt die App eine Liste mit SHA-256 je Datei bei
