@@ -31,6 +31,18 @@ contextBridge.exposeInMainWorld('croc', {
     return () => ipcRenderer.removeListener('manifest:result', handler);
   },
 
+  startMessages: () => ipcRenderer.invoke('msg:start'),
+  stopMessages: () => ipcRenderer.invoke('msg:stop'),
+  messageState: () => ipcRenderer.invoke('msg:state'),
+  listMessages: (contactId) => ipcRenderer.invoke('msg:list', contactId),
+  sendMessage: (contactId, text) => ipcRenderer.invoke('msg:send', { contactId, text }),
+  clearMessages: (contactId) => ipcRenderer.invoke('msg:clear', contactId),
+  onMessage: (fn) => {
+    const handler = (_e, p) => fn(p);
+    ipcRenderer.on('msg:event', handler);
+    return () => ipcRenderer.removeListener('msg:event', handler);
+  },
+
   canSelfUpdate: () => ipcRenderer.invoke('update:can'),
   fetchUpdate: () => ipcRenderer.invoke('update:fetch'),
   applyUpdate: () => ipcRenderer.invoke('update:apply'),

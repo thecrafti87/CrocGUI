@@ -59,6 +59,13 @@ file; the receiving card displays it with a copy button. A note under the field
 says that croc takes the text as an argument, so it is briefly visible in the
 sending machine’s process list. For a secret, send a file.
 
+**Messages** — Short notes to your contacts, handy for passing on a code
+without reaching for another app. Requires your own relay: croc has no mailbox,
+so both sides listen in short attempts and sending retries until the line is
+free — measured, a note arrives after a few seconds. Each contact gets a message
+code derived from its file code, so listening never disturbs a file transfer and
+neither side has to exchange anything extra.
+
 **Receive** — Type or paste the code, pick a target folder, done. On a name
 clash: overwrite (the default, see below) or save under a new name.
 

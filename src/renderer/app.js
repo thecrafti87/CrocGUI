@@ -23,6 +23,11 @@ const state = {
   crocLatest: null,
   canSelfUpdate: false,
   history: [],
+  msgWith: null,
+  msgLog: [],
+  msgUnread: [],
+  msgRunning: false,
+  msgRelay: false,
   finder: false,
   diag: null
 };
@@ -93,6 +98,9 @@ function applyLang() {
   renderFinder();
   renderDiag();
   renderHelp();
+  renderMsgContacts();
+  renderMsgLog();
+  renderMsgState();
   if (!$('#relayLog').dataset.fresh) $('#relayLog').textContent = T('relay.logEmpty');
   if (!editingId) $('#contactFoldTitle').textContent = T('contacts.new');
   gradeCode();
@@ -711,6 +719,8 @@ function renderContacts() {
     list.append(card);
   });
 
+  renderMsgContacts();
+
   // Auswahlfelder in Senden und Empfangen
   [['#sendContact', '#sendPickRow'], ['#recvContact', '#recvPickRow']].forEach(([sel, row]) => {
     const node = $(sel);
@@ -1179,6 +1189,127 @@ async function runDiag() {
 
 $('#diagRun').addEventListener('click', runDiag);
 
+/* --------------------------- Nachrichten --------------------------- */
+
+function renderMsgContacts() {
+  const box = $('#msgContacts');
+  box.textContent = '';
+  if (!state.contacts.length) return;
+
+  state.contacts.forEach((c) => {
+    const btn = el('button', 'chat__name');
+    btn.type = 'button';
+    btn.classList.toggle('is-on', c.id === state.msgWith);
+    btn.append(el('b', null, c.name));
+    if (state.msgUnread.includes(c.id)) btn.append(el('span', 'chat__new', T('msg.unread')));
+    btn.addEventListener('click', () => selectChat(c.id));
+    box.append(btn);
+  });
+}
+
+function renderMsgLog() {
+  const box = $('#msgLog');
+  box.textContent = '';
+
+  if (!state.contacts.length) { box.append(el('p', 'chat__hollow', T('msg.noContacts'))); return; }
+  if (!state.msgWith) { box.append(el('p', 'chat__hollow', T('msg.pick'))); return; }
+
+  const who = contactById(state.msgWith);
+  if (!state.msgLog.length) {
+    box.append(el('p', 'chat__hollow', T('msg.empty', who ? who.name : '')));
+    return;
+  }
+  state.msgLog.forEach((m) => {
+    const b = el('div', 'bubble', m.text);
+    b.dataset.dir = m.dir;
+    b.append(el('time', null, stamp(m.at)));
+    box.append(b);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+async function selectChat(contactId) {
+  state.msgWith = contactId;
+  state.msgUnread = state.msgUnread.filter((id) => id !== contactId);
+  state.msgLog = await api.listMessages(contactId);
+  renderMsgContacts();
+  renderMsgLog();
+}
+
+function renderMsgState() {
+  const on = state.msgRunning;
+  $('#msgState').classList.toggle('is-live', on);
+  $('#msgState').lastElementChild.textContent = T(on ? 'msg.listening' : 'msg.off');
+  $('#msgToggle').textContent = T(on ? 'msg.stop' : 'msg.start');
+  $('#msgToggle').classList.toggle('btn--stop', on);
+  $('#msgToggle').classList.toggle('btn--jade', !on);
+  $('#msgNote').textContent = state.msgRelay ? T('msg.hint') : T('msg.needRelay');
+  $('#msgNote').dataset.tone = state.msgRelay ? '' : 'bad';
+  $$('.rail__item').find((b) => b.dataset.view === 'messages')
+    .classList.toggle('has-watch', state.msgUnread.length > 0);
+}
+
+async function refreshMsgState() {
+  const st = await api.messageState();
+  state.msgRunning = st.running;
+  state.msgRelay = st.hasRelay;
+  renderMsgState();
+}
+
+$('#msgToggle').addEventListener('click', async () => {
+  if (state.msgRunning) { await api.stopMessages(); return; }
+  const res = await api.startMessages();
+  if (!res.ok) { toast(T('msg.needRelay'), 'bad'); return; }
+});
+
+$('#msgSend').addEventListener('click', async () => {
+  const text = $('#msgText').value.trim();
+  if (!text || !state.msgWith) return;
+  $('#msgSend').disabled = true;
+  const res = await api.sendMessage(state.msgWith, text);
+  $('#msgSend').disabled = false;
+  $('#msgStatus').classList.remove('is-on');
+  if (!res.ok) {
+    toast(res.reason === 'no-relay' ? T('msg.needRelay') : T('msg.failed'), 'bad');
+    return;
+  }
+  $('#msgText').value = '';
+  toast(T('msg.sent', res.attempts), 'good');
+  state.msgLog = await api.listMessages(state.msgWith);
+  renderMsgLog();
+});
+
+$('#msgText').addEventListener('keydown', (e) => {
+  // Enter schickt, Umschalt+Enter macht eine neue Zeile.
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#msgSend').click(); }
+});
+
+$('#msgClear').addEventListener('click', async () => {
+  if (!state.msgWith) return;
+  await api.clearMessages(state.msgWith);
+  state.msgLog = [];
+  renderMsgLog();
+  toast(T('msg.cleared'));
+});
+
+api.onMessage(async (ev) => {
+  if (ev.kind === 'state') { state.msgRunning = ev.running; renderMsgState(); return; }
+  if (ev.kind === 'sending') {
+    $('#msgStatus').textContent = T('msg.sending', ev.attempt, ev.of);
+    $('#msgStatus').classList.add('is-on');
+    return;
+  }
+  if (ev.kind !== 'in') return;
+  if (ev.contactId === state.msgWith) {
+    state.msgLog = await api.listMessages(ev.contactId);
+    renderMsgLog();
+  } else if (!state.msgUnread.includes(ev.contactId)) {
+    state.msgUnread.push(ev.contactId);
+  }
+  renderMsgContacts();
+  renderMsgState();
+});
+
 /* ----------------------------- Verlauf ----------------------------- */
 
 function stamp(iso) {
@@ -1441,6 +1572,7 @@ api.onMenu(async (action) => {
 
   await detectCroc(false);
   refreshUpdateButton();
+  refreshMsgState();
   if (values.autoUpdate) {
     checkUpdate();
     checkCrocLatest();

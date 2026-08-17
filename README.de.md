@@ -62,6 +62,14 @@ Ein Hinweis unter dem Feld sagt, dass croc den Text als Argument entgegennimmt �
 er ist darum kurzzeitig in der Prozessliste des sendenden Rechners sichtbar. Für
 ein Geheimnis also lieber eine Datei.
 
+**Nachrichten** — Kurze Zettel an deine Kontakte, praktisch um einen Code
+weiterzugeben, ohne zu einer anderen App zu greifen. Braucht ein eigenes Relay:
+croc kennt kein Postfach, deshalb horchen beide Seiten in kurzen Anläufen und
+das Senden wiederholt sich, bis die Leitung frei ist — gemessen ist ein Zettel
+nach wenigen Sekunden da. Jeder Kontakt bekommt einen aus seinem Dateicode
+abgeleiteten Nachrichtencode, so stört das Horchen nie eine Dateiübertragung und
+keine Seite muss etwas Zusätzliches austauschen.
+
 **Empfangen** — Code eintippen oder einfügen, Zielordner wählen, fertig. Bei
 Namenskonflikten überschreiben (die Voreinstellung, siehe unten) oder unter
 neuem Namen sichern.

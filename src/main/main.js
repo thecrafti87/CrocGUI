@@ -19,6 +19,7 @@ const diagnose = require('./diagnose');
 const manifest = require('./manifest');
 const selfupdate = require('./selfupdate');
 const crocupdate = require('./crocupdate');
+const messenger = require('./messenger');
 const { detect, Runner } = require('./croc');
 
 let win = null;
@@ -401,6 +402,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   if (runner) runner.cancelAll();
+  messenger.stop();
 });
 
 /* ------------------------------------------------------------------ *
@@ -465,6 +467,25 @@ ipcMain.handle('settings:set', (_e, patch) => {
 
 ipcMain.handle('history:list', () => history.withExistence(history.load()));
 ipcMain.handle('history:clear', () => history.clear());
+
+/* Nachrichten */
+
+function messengerEvent(kind, payload) {
+  if (win && !win.isDestroyed()) win.webContents.send('msg:event', { kind, ...payload });
+  if (kind === 'in') {
+    notify(tr('msg.notifyTitle', payload.name), payload.text.slice(0, 180));
+  }
+}
+
+ipcMain.handle('msg:start', () => messenger.start(messengerEvent));
+ipcMain.handle('msg:stop', () => messenger.stop());
+ipcMain.handle('msg:state', () => ({
+  running: messenger.isRunning(),
+  hasRelay: Boolean(settings.load().relay)
+}));
+ipcMain.handle('msg:list', (_e, contactId) => messenger.forContact(contactId));
+ipcMain.handle('msg:send', (_e, { contactId, text }) => messenger.send(contactId, text));
+ipcMain.handle('msg:clear', (_e, contactId) => messenger.clear(contactId));
 
 /* Selbstaktualisierung */
 

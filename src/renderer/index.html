@@ -51,6 +51,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="8.5" r="2.8"/><path d="M3.6 18.4a4.9 4.9 0 0 1 9.8 0"/><path d="M16.5 7h4M16.5 11h4M16.5 15h2.6" class="thin"/></svg>
       <span data-i18n="nav.contacts">Contacts</span>
     </button>
+    <button class="rail__item" data-view="messages" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12.6a7.4 7.4 0 0 1-7.9 7.3l-4.9 1.5 1.4-3.4A7.4 7.4 0 1 1 20 12.6z"/><path d="M8.6 11.6h6.8M8.6 14.6h4.2" class="thin"/></svg>
+      <span data-i18n="nav.messages">Messages</span>
+    </button>
     <button class="rail__item" data-view="history" type="button">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v5l3.2 2"/><path d="M3.6 12a8.4 8.4 0 1 0 2.6-6.1"/><path d="M3.4 4.4v4.2h4.2" class="thin"/></svg>
       <span data-i18n="nav.history">History</span>
@@ -237,6 +241,38 @@
       </details>
 
       <p class="note" data-i18n="contacts.warning"></p>
+    </section>
+
+    <!-- =========================== MESSAGES ========================== -->
+    <section class="view" id="view-messages">
+      <div class="ghost">MSG</div>
+      <div class="head">
+        <p class="kicker" data-i18n="msg.kicker"></p>
+        <h1 data-i18n="msg.title"></h1>
+        <p class="lede" data-i18n="msg.lede"></p>
+      </div>
+
+      <div class="act">
+        <button class="btn btn--go btn--jade" id="msgToggle" type="button"></button>
+        <div class="relaystate" id="msgState"><span class="led"></span><span></span></div>
+      </div>
+
+      <p class="hint" id="msgNote"></p>
+
+      <div class="chat">
+        <aside class="chat__who" id="msgContacts"></aside>
+        <div class="chat__side">
+          <div class="chat__log" id="msgLog"></div>
+          <div class="chat__box">
+            <textarea id="msgText" rows="2" data-i18n-ph="msg.placeholder"></textarea>
+            <div class="chat__acts">
+              <button class="btn btn--go btn--sm" id="msgSend" type="button" data-i18n="msg.send"></button>
+              <button class="btn btn--ghost btn--sm" id="msgClear" type="button" data-i18n="msg.clear"></button>
+              <span class="sumline" id="msgStatus"></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ============================ HISTORY =========================== -->
