@@ -1224,7 +1224,10 @@ function renderCrocStatus() {
     badge.dataset.state = 'bad';
     text.textContent = T('app.missing');
     badge.title = T('app.missingTitle');
-    $('#settingsNote').textContent = T('set.notFound');
+    $('#settingsNote').textContent = T({
+      win32: 'set.notFoundWin',
+      linux: 'set.notFoundLinux'
+    }[api.platform] || 'set.notFound');
   }
 }
 
@@ -1400,6 +1403,9 @@ function paneButton(key, pane) {
   return b;
 }
 
+// Ein paar Zeilen im Selbsttest fuehren in die macOS-Systemeinstellungen.
+const MAC = api.platform === 'darwin';
+
 function renderDiag() {
   const box = $('#diagList');
   box.textContent = '';
@@ -1420,7 +1426,7 @@ function renderDiag() {
   push(diagRow(T('diag.outDir'),
     d.outDir.ok ? T('diag.outDirOk', d.outDir.path) : T('diag.outDirBad', d.outDir.message || ''),
     d.outDir.ok ? 'ok' : 'bad',
-    d.outDir.ok ? [] : [paneButton('diag.paneFiles', 'files')]), d.outDir.ok);
+    d.outDir.ok || !MAC ? [] : [paneButton('diag.paneFiles', 'files')]), d.outDir.ok);
 
   // Platz
   push(diagRow(T('diag.space'),
@@ -1435,18 +1441,20 @@ function renderDiag() {
       : T('diag.relayBad', d.relay.target, d.relay.message || ''),
     d.relay.ok ? 'ok' : 'bad'), d.relay.ok);
 
-  // Mitteilungen - macOS gibt den Zustand nicht preis, also ehrlich bleiben
+  // Mitteilungen - kein System gibt den Zustand preis, also ehrlich bleiben
   const test = el('button', 'btn btn--ghost btn--sm', T('diag.testNote'));
   test.type = 'button';
   test.addEventListener('click', () => api.testNotification());
-  box.append(diagRow(T('diag.notify'), T('diag.notifyUnknown'), 'off',
-    [test, paneButton('diag.paneNotify', 'notifications')]));
+  box.append(diagRow(T('diag.notify'), T(MAC ? 'diag.notifyUnknown' : 'diag.notifyOther'), 'off',
+    MAC ? [test, paneButton('diag.paneNotify', 'notifications')] : [test]));
 
   // Finder
-  box.append(diagRow(T('diag.finder'),
-    T(d.finder.ok ? 'diag.finderOk' : 'diag.finderNo'),
-    d.finder.ok ? 'ok' : 'off',
-    d.finder.ok ? [] : [paneButton('diag.paneServices', 'services')]));
+  if (d.finder.supported) {
+    box.append(diagRow(T('diag.finder'),
+      T(d.finder.ok ? 'diag.finderOk' : 'diag.finderNo'),
+      d.finder.ok ? 'ok' : 'off',
+      d.finder.ok ? [] : [paneButton('diag.paneServices', 'services')]));
+  }
 
   const sum = el('p', 'diag__sum', bad
     ? T('diag.someBad', bad, 4)
@@ -1726,6 +1734,10 @@ api.onFiles(async (paths) => {
 
 async function renderFinder() {
   const status = await api.finderStatus();
+  // Den Finder-Kurzbefehl gibt es nur unter macOS - anderswo waere der
+  // Knopf ein Versprechen ohne Deckung.
+  $('#finderRow').hidden = !status.supported;
+  if (!status.supported) return;
   state.finder = status.installed;
   $('#finderToggle').textContent = T(status.installed ? 'finder.remove' : 'finder.install');
   $('#finderNote').textContent = T(status.installed ? 'finder.ready' : 'finder.missing');
@@ -1823,7 +1835,8 @@ $('#updateInstall').addEventListener('click', async () => {
       version: 'update.failedVersion',
       'read-only': 'update.failedPlace',
       dev: 'update.failedPlace',
-      'no-bundle': 'update.failedPlace'
+      'no-bundle': 'update.failedPlace',
+      platform: 'update.failedPlace'
     };
     const key = map[res.reason] || 'update.failedGeneric';
     toast(T(key, res.message || ''), 'bad');

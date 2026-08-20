@@ -83,6 +83,10 @@ function versionOfBundle(bundle) {
 
 /** Kann die App sich selbst ersetzen, oder fehlen die Rechte? */
 function canReplace() {
+  // Der Tausch von Hand kennt nur den Aufbau eines .app-Pakets. Auf
+  // Windows und Linux verweist die Oberflaeche stattdessen auf den
+  // Download - der Knopf dafuer steht ohnehin schon da.
+  if (process.platform !== 'darwin') return { ok: false, reason: 'platform' };
   if (!app.isPackaged) return { ok: false, reason: 'dev' };
   const bundle = bundlePath();
   if (!bundle.endsWith('.app')) return { ok: false, reason: 'no-bundle' };

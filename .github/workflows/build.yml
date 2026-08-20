@@ -1,0 +1,107 @@
+# =====================================================================
+# Baut CrocGUI fuer macOS, Windows und Linux.
+#
+# Jedes System braucht seinen eigenen Laeufer: ein DMG entsteht nur auf
+# macOS, ein NSIS-Installer nur auf Windows. Die Matrix startet deshalb
+# drei Laeufe gleichzeitig, jeder holt sich sein croc und baut sein
+# Paket. Danach sammelt ein vierter Lauf alles ein.
+#
+#   - bei jedem Push und Pull Request: bauen und pruefen
+#   - bei einem Tag "v1.2.3": zusaetzlich eine Veroeffentlichung als
+#     Entwurf anlegen, an der alle Pakete haengen
+#   - von Hand ueber "Run workflow" jederzeit
+# =====================================================================
+
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Ein kaputtes System soll die anderen beiden nicht abwuergen.
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS
+            os: macos-latest
+            # macOS-Laeufer sind arm64 - das x64-Paket muss man erbitten.
+            run: npm run dist:mac -- --x64 --arm64
+          - name: Windows
+            os: windows-latest
+            run: npm run dist:win
+          - name: Linux
+            os: ubuntu-latest
+            run: npm run dist:linux
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Paket bauen
+        run: ${{ matrix.run }}
+        env:
+          # Ohne Apple-Developer-ID wird nicht signiert - sonst bricht
+          # electron-builder auf dem Laeufer ab.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CrocGUI-${{ matrix.name }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/*.dmg
+            build/*.exe
+            build/*.zip
+            build/*.AppImage
+            build/*.deb
+
+  release:
+    name: Veroeffentlichung
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: pakete
+          merge-multiple: true
+
+      - run: ls -lh pakete
+
+      # Als Entwurf: erst nachsehen, dann veroeffentlichen. Wer das nicht
+      # will, nimmt --draft heraus.
+      - name: Entwurf anlegen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "CrocGUI $GITHUB_REF_NAME" \
+            --generate-notes \
+            --draft \
+            pakete/*

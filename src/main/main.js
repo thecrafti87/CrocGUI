@@ -27,6 +27,13 @@ let win = null;
 let runner = null;
 let tray = null;
 
+/** Wo das App-Symbol liegt - gebaut im Paket, sonst im Projekt. */
+function appIconPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'icon.png')
+    : path.join(__dirname, '..', '..', 'assets', 'icon.png');
+}
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1020,
@@ -37,6 +44,8 @@ function createWindow() {
     backgroundColor: '#0a0d0b',
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     trafficLightPosition: { x: 18, y: 21 },
+    // macOS holt sich das Symbol aus dem Paket, Windows und Linux nicht.
+    ...(process.platform === 'darwin' ? {} : { icon: appIconPath() }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -203,6 +212,9 @@ function showWindow() {
  * ------------------------------------------------------------------ */
 
 function trayIconPath() {
+  // Die einfarbige Schablone passt zur macOS-Menueleiste. Windows und
+  // Linux zeigen im Infobereich ein farbiges Symbol.
+  if (process.platform !== 'darwin') return appIconPath();
   return app.isPackaged
     ? path.join(process.resourcesPath, 'crocTemplate.png')
     : path.join(__dirname, '..', '..', 'assets', 'crocTemplate.png');
@@ -210,9 +222,14 @@ function trayIconPath() {
 
 function buildTray() {
   if (tray) return;
-  const image = nativeImage.createFromPath(trayIconPath());
+  let image = nativeImage.createFromPath(trayIconPath());
   if (image.isEmpty()) return;
-  image.setTemplateImage(true);
+  if (process.platform === 'darwin') {
+    image.setTemplateImage(true);
+  } else {
+    // Das App-Symbol ist 1024 Pixel gross - so gross will es dort niemand.
+    image = image.resize({ width: 16, height: 16 });
+  }
 
   tray = new Tray(image);
   tray.setToolTip('CrocGUI');
@@ -372,9 +389,7 @@ app.whenReady().then(() => {
   // In der gebauten App kommt das Symbol aus dem Paket. Beim Start aus der
   // Entwicklung laeuft Electrons eigenes Binary - dann setzen wir es selbst,
   // damit im Dock nicht das Electron-Symbol steht.
-  const iconFile = app.isPackaged
-    ? path.join(process.resourcesPath, 'icon.png')
-    : path.join(__dirname, '..', '..', 'assets', 'icon.png');
+  const iconFile = appIconPath();
   const icon = nativeImage.createFromPath(iconFile);
   if (!app.isPackaged && !icon.isEmpty() && app.dock) app.dock.setIcon(icon);
 
@@ -571,8 +586,9 @@ ipcMain.handle('system:pane', (_e, which) => {
 /* Finder-Kurzbefehl */
 
 ipcMain.handle('finder:status', () => ({
+  supported: quickaction.supported(),
   installed: quickaction.isInstalled(),
-  path: quickaction.servicePath()
+  path: quickaction.supported() ? quickaction.servicePath() : null
 }));
 ipcMain.handle('finder:install', (_e, label) => {
   try {
@@ -634,10 +650,16 @@ ipcMain.handle('dialog:pickFolder', async (_e, current) => {
 });
 
 ipcMain.handle('dialog:pickBinary', async () => {
+  const win32 = process.platform === 'win32';
   const res = await dialog.showOpenDialog(win, {
     title: 'croc-Programm auswaehlen',
     properties: ['openFile'],
-    defaultPath: '/usr/local/bin'
+    defaultPath: win32
+      ? (process.env.ProgramFiles || 'C:/Program Files')
+      : '/usr/local/bin',
+    ...(win32
+      ? { filters: [{ name: 'Programme', extensions: ['exe'] }, { name: 'Alle Dateien', extensions: ['*'] }] }
+      : {})
   });
   return res.canceled ? null : res.filePaths[0];
 });

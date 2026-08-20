@@ -1,6 +1,6 @@
 {
   "name": "croc-gui",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "Desktop-Oberflaeche fuer croc - sicher Dateien zwischen Rechnern uebertragen",
   "main": "src/main/main.js",
   "author": "thecrafti87",
@@ -15,8 +15,11 @@
     "start": "electron .",
     "fetch-croc": "node scripts/fetch-croc.js",
     "fetch-croc:latest": "node scripts/fetch-croc.js --latest",
-    "predist": "node scripts/fetch-croc.js",
-    "dist": "electron-builder --mac"
+    "fetch-croc:all": "node scripts/fetch-croc.js --all",
+    "dist": "node scripts/fetch-croc.js && electron-builder",
+    "dist:mac": "node scripts/fetch-croc.js --platform darwin && electron-builder --mac",
+    "dist:win": "node scripts/fetch-croc.js --platform win32 && electron-builder --win",
+    "dist:linux": "node scripts/fetch-croc.js --platform linux && electron-builder --linux"
   },
   "dependencies": {
     "qrcode": "^1.5.4"
@@ -32,25 +35,9 @@
       "src/**/*",
       "package.json"
     ],
-    "extraResources": [
-      {
-        "from": "vendor/darwin-${arch}",
-        "to": ".",
-        "filter": [
-          "croc",
-          "VERSION"
-        ]
-      },
-      {
-        "from": "assets",
-        "to": ".",
-        "filter": [
-          "icon.png",
-          "crocTemplate.png",
-          "crocTemplate@2x.png"
-        ]
-      }
-    ],
+    "directories": {
+      "output": "build"
+    },
     "mac": {
       "icon": "assets/icon.icns",
       "category": "public.app-category.utilities",
@@ -70,7 +57,122 @@
             "LSHandlerRank": "Alternate"
           }
         ]
-      }
+      },
+      "extraResources": [
+        {
+          "from": "vendor/darwin-${arch}",
+          "to": ".",
+          "filter": [
+            "croc",
+            "VERSION"
+          ]
+        },
+        {
+          "from": "assets",
+          "to": ".",
+          "filter": [
+            "icon.png",
+            "crocTemplate.png",
+            "crocTemplate@2x.png"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "icon": "assets/icon.icns",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "writeUpdateInfo": false
+    },
+    "win": {
+      "icon": "assets/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "vendor/win32-${arch}",
+          "to": ".",
+          "filter": [
+            "croc.exe",
+            "VERSION"
+          ]
+        },
+        {
+          "from": "assets",
+          "to": ".",
+          "filter": [
+            "icon.png",
+            "crocTemplate.png",
+            "crocTemplate@2x.png"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "CrocGUI",
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "category": "Utility",
+      "synopsis": "Dateien sicher zwischen Rechnern uebertragen",
+      "maintainer": "thecrafti87",
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "CrocGUI"
+        }
+      },
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "extraResources": [
+        {
+          "from": "vendor/linux-${arch}",
+          "to": ".",
+          "filter": [
+            "croc",
+            "VERSION"
+          ]
+        },
+        {
+          "from": "assets",
+          "to": ".",
+          "filter": [
+            "icon.png",
+            "crocTemplate.png",
+            "crocTemplate@2x.png"
+          ]
+        }
+      ]
     },
     "publish": [
       {
@@ -79,15 +181,7 @@
         "repo": "CrocGUI",
         "releaseType": "release"
       }
-    ],
-    "directories": {
-      "output": "build"
-    },
-    "dmg": {
-      "icon": "assets/icon.icns",
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
-      "writeUpdateInfo": false
-    }
+    ]
   },
   "crocVersion": "11.1.1"
 }

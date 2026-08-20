@@ -17,17 +17,21 @@ English is the default.
 
 ## Install
 
-Grab the DMG for your Mac from
+Grab the package for your machine from
 [Releases](https://github.com/thecrafti87/CrocGUI/releases/latest):
 
 | File | For |
 |---|---|
-| `CrocGUI-<version>-arm64.dmg` | Apple Silicon (M1–M4) |
-| `CrocGUI-<version>-x64.dmg` | Intel |
+| `CrocGUI-<version>-arm64.dmg` | macOS, Apple Silicon (M1–M4) |
+| `CrocGUI-<version>-x64.dmg` | macOS, Intel |
+| `CrocGUI-Setup-<version>-x64.exe` | Windows 10/11, installer |
+| `CrocGUI-<version>-x64.zip` | Windows 10/11, no install |
+| `CrocGUI-<version>-x64.AppImage` | Linux, anywhere |
+| `CrocGUI-<version>-x64.deb` | Linux, Debian and Ubuntu |
 
 Nothing else is needed — croc travels inside the app.
 
-### First launch
+### First launch on macOS
 
 The app is not signed with an Apple Developer ID, so macOS blocks it the first
 time. The old right-click → Open trick stopped working with macOS 15; Apple
@@ -45,6 +49,34 @@ xattr -dr com.apple.quarantine /Applications/CrocGUI.app
 
 Either way, only once. The app cannot grant itself that — which is the entire
 point of the protection.
+
+### First launch on Windows
+
+The installer carries no code-signing certificate, so SmartScreen speaks up:
+**“Windows protected your PC”**. Click **More info**, then **Run anyway**.
+Windows will not ask again.
+
+The installer writes into your user profile only, so no admin password is
+needed. If you would rather not install anything, take the ZIP, unpack it
+wherever you like and start `CrocGUI.exe` directly.
+
+### First launch on Linux
+
+The AppImage needs the executable bit once:
+
+```bash
+chmod +x CrocGUI-*.AppImage
+./CrocGUI-*.AppImage
+```
+
+The `.deb` goes the usual way: `sudo apt install ./CrocGUI-*.deb`.
+
+### What only macOS gets
+
+Two things are tied to macOS and are missing elsewhere, without anything else
+being lost: the **Finder shortcut** (the row in the settings is not shown at
+all there) and **updating from inside the app** — on Windows and Linux the
+button opens the download page instead.
 
 ## What it does
 
@@ -294,7 +326,9 @@ prefers local connections by itself anyway.
 
 ## Building it yourself
 
-Requirements: macOS (arm64 or x64) and Node.js 20 or newer.
+Requirements: Node.js 20 or newer. A build always targets the system you are
+sitting at — a DMG only happens on macOS, an NSIS installer only on Windows.
+For all three at once there is the GitHub Action further down.
 
 ```bash
 npm install
@@ -302,19 +336,24 @@ npm run fetch-croc
 npm start
 ```
 
-`fetch-croc` downloads the croc binaries for both architectures into `vendor/`.
-Without that step CrocGUI falls back to a croc from the system during
-development, if there is one.
+`fetch-croc` downloads the croc binaries for both architectures of the running
+system into `vendor/<system>-<arch>/`. Without that step CrocGUI falls back to a
+croc from the system during development, if there is one. For a different
+system: `node scripts/fetch-croc.js --platform win32` (or `darwin`, `linux`,
+`--all`).
 
 A distributable app:
 
 ```bash
-npm run dist
+npm run dist          # for the system you are sitting at
+npm run dist:mac      # DMG
+npm run dist:win      # NSIS installer and ZIP
+npm run dist:linux    # AppImage and deb
 ```
 
-The result lands in `build/`. The binaries are fetched beforehand (`predist`),
-pinned through the `crocVersion` field in `package.json`. To move to a newer
-croc:
+The result lands in `build/`. Each of those scripts fetches the croc binaries
+first, pinned through the `crocVersion` field in `package.json`. To move to a
+newer croc:
 
 ```bash
 npm run fetch-croc:latest
@@ -328,6 +367,27 @@ Publishing a release:
 ```bash
 npm version patch && npm run dist -- --publish always
 ```
+
+### All three systems at once
+
+A DMG can only be built on macOS, an NSIS installer only on Windows — a single
+machine will not get you far. `.github/workflows/build.yml` therefore starts
+three runners in parallel, one per system, and collects the packages afterwards.
+
+It runs on every push to `main`, on every pull request, and by hand through
+**Actions → Build → Run workflow**. The packages hang off the run as artifacts.
+
+If the push carries a tag, a release with all six files is created on top — as a
+draft, so you can look before it goes out:
+
+```bash
+npm version patch      # sets the version and creates the tag
+git push --follow-tags
+```
+
+Nothing is signed: no Apple Developer ID, no Windows certificate. Both cost
+money and change nothing about how the app works — they only spare users the
+warning on first launch.
 
 ## Tests
 

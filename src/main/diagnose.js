@@ -97,7 +97,7 @@ async function run() {
     outDir: checkWritable(outDir),
     space: { ...checkSpace(outDir), path: outDir },
     relay: { ...relay, custom: Boolean(cfg.relay) },
-    finder: { ok: quickaction.isInstalled() }
+    finder: { supported: quickaction.supported(), ok: quickaction.isInstalled() }
   };
 }
 

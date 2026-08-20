@@ -156,7 +156,9 @@ async function findRenamed(dir, entry) {
       continue;
     }
     const sum = await hashFile(cand, () => {});
-    if (sum === entry.sha256) return path.relative(dir, cand);
+    // In der Liste stehen Pfade mit Schraegstrich - auch unter Windows,
+    // wo path.relative den umgekehrten liefert.
+    if (sum === entry.sha256) return path.relative(dir, cand).split(path.sep).join('/');
   }
   return null;
 }

@@ -18,8 +18,62 @@ const { app } = require('electron');
 
 const REPO = 'schollz/croc';
 
-// Die Bezeichnung der Anhaenge in den croc-Veroeffentlichungen.
-const ASSET = { arm64: 'macOS-ARM64', x64: 'macOS-64bit' };
+// Die Bezeichnung der Anhaenge in den croc-Veroeffentlichungen, je
+// System und Architektur - und in welcher Verpackung sie stecken.
+const ASSET = {
+  darwin: { arm64: ['macOS-ARM64', 'tar.gz'], x64: ['macOS-64bit', 'tar.gz'] },
+  win32: { x64: ['Windows-64bit', 'zip'], arm64: ['Windows-ARM64', 'zip'] },
+  linux: { x64: ['Linux-64bit', 'tar.gz'], arm64: ['Linux-ARM64', 'tar.gz'] }
+};
+
+// Wie das Programm auf diesem System heisst.
+const EXE = process.platform === 'win32' ? 'croc.exe' : 'croc';
+
+/**
+ * Packt ein Archiv aus. Aufgerufen wird immer aus dem Zielordner heraus
+ * und nur mit dem Dateinamen - tar auf Windows haelt "C:\..." sonst
+ * fuer einen entfernten Rechner.
+ */
+function unpack(archive, into, ext) {
+  const file = path.basename(archive);
+  const run = (cmd, args) => execFileSync(cmd, args, { cwd: into, timeout: 60000, stdio: 'pipe' });
+
+  if (ext === 'tar.gz') {
+    run('tar', ['-xzf', file]);
+    return;
+  }
+
+  const attempts = [
+    () => run('tar', ['-xf', file]),
+    () => run('unzip', ['-o', '-q', file])
+  ];
+  if (process.platform === 'win32') {
+    attempts.push(() => run('powershell', [
+      '-NoProfile', '-NonInteractive', '-Command',
+      `Expand-Archive -LiteralPath '${file}' -DestinationPath '.' -Force`
+    ]));
+  }
+
+  let last = null;
+  for (const attempt of attempts) {
+    try { return attempt(); } catch (err) { last = err; }
+  }
+  throw new Error(`konnte ${file} nicht auspacken: ${last && last.message}`);
+}
+
+/** Sucht das Programm im ausgepackten Archiv - es liegt nicht immer flach. */
+function findBinary(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const hit = findBinary(full);
+      if (hit) return hit;
+    } else if (entry.name === EXE) {
+      return full;
+    }
+  }
+  return null;
+}
 
 function getJson(url) {
   return new Promise((resolve, reject) => {
@@ -64,8 +118,9 @@ function store() {
 /** Der Pfad einer selbst geholten Fassung, falls vorhanden und lauffaehig. */
 function managed() {
   try {
-    const file = path.join(store(), 'croc');
-    fs.accessSync(file, fs.constants.X_OK);
+    const file = path.join(store(), EXE);
+    // Windows kennt kein Ausfuehrungsrecht - dort zaehlt, dass sie da ist.
+    fs.accessSync(file, process.platform === 'win32' ? fs.constants.F_OK : fs.constants.X_OK);
     return file;
   } catch {
     return null;
@@ -96,28 +151,32 @@ function versionOf(bin) {
  * Programm auf Nachfrage seine Fassung nennt, wird es uebernommen.
  */
 async function install(onProgress) {
-  const asset = ASSET[process.arch];
-  if (!asset) return { ok: false, message: `keine croc-Fassung für ${process.arch}` };
+  const entry = (ASSET[process.platform] || {})[process.arch];
+  if (!entry) {
+    return { ok: false, message: `keine croc-Fassung für ${process.platform}/${process.arch}` };
+  }
+  const [asset, ext] = entry;
 
   const release = await getJson(`https://api.github.com/repos/${REPO}/releases/latest`);
   const version = String(release.tag_name || '').replace(/^v/, '');
   if (!version) return { ok: false, message: 'keine Veröffentlichung gefunden' };
 
-  const name = `croc_v${version}_${asset}.tar.gz`;
+  const name = `croc_v${version}_${asset}.${ext}`;
   const found = (release.assets || []).find((a) => a.name === name);
   if (!found) return { ok: false, message: `${name} nicht in der Veröffentlichung` };
 
   const work = fs.mkdtempSync(path.join(os.tmpdir(), 'crocbin-'));
   try {
-    const tar = path.join(work, name);
+    const archive = path.join(work, name);
     onProgress({ phase: 'download', done: 0, total: found.size });
-    await download(found.browser_download_url, tar, (p) => onProgress({ phase: 'download', ...p }));
+    await download(found.browser_download_url, archive, (p) => onProgress({ phase: 'download', ...p }));
 
     onProgress({ phase: 'unpack' });
-    execFileSync('/usr/bin/tar', ['-xzf', tar, '-C', work, 'croc'], { timeout: 60000 });
+    unpack(archive, work, ext);
 
-    const fresh = path.join(work, 'croc');
-    fs.chmodSync(fresh, 0o755);
+    const fresh = findBinary(work);
+    if (!fresh) return { ok: false, message: `${EXE} steckt nicht in ${name}` };
+    if (process.platform !== 'win32') fs.chmodSync(fresh, 0o755);
 
     // Erst fragen, dann uebernehmen - ein Programm, das nicht antwortet,
     // wollen wir nicht als das bevorzugte eintragen.
@@ -125,10 +184,10 @@ async function install(onProgress) {
     if (!reported) return { ok: false, message: 'das geladene Programm antwortet nicht' };
 
     fs.mkdirSync(store(), { recursive: true });
-    const target = path.join(store(), 'croc');
+    const target = path.join(store(), EXE);
     fs.rmSync(target, { force: true });
     fs.copyFileSync(fresh, target);
-    fs.chmodSync(target, 0o755);
+    if (process.platform !== 'win32') fs.chmodSync(target, 0o755);
     fs.writeFileSync(path.join(store(), 'VERSION'), `${reported}\n`, 'utf8');
 
     return { ok: true, version: reported, path: target };

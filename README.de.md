@@ -17,17 +17,21 @@ oben rechts. Voreingestellt ist Englisch.
 
 ## Installieren
 
-Das passende DMG unter
+Das passende Paket unter
 [Releases](https://github.com/thecrafti87/CrocGUI/releases/latest) holen:
 
 | Datei | für |
 |---|---|
-| `CrocGUI-<Fassung>-arm64.dmg` | Apple Silicon (M1–M4) |
-| `CrocGUI-<Fassung>-x64.dmg` | Intel |
+| `CrocGUI-<Fassung>-arm64.dmg` | macOS, Apple Silicon (M1–M4) |
+| `CrocGUI-<Fassung>-x64.dmg` | macOS, Intel |
+| `CrocGUI-Setup-<Fassung>-x64.exe` | Windows 10/11, Installer |
+| `CrocGUI-<Fassung>-x64.zip` | Windows 10/11, ohne Installation |
+| `CrocGUI-<Fassung>-x64.AppImage` | Linux, überall |
+| `CrocGUI-<Fassung>-x64.deb` | Linux, Debian und Ubuntu |
 
 Sonst wird nichts gebraucht — croc steckt in der App.
 
-### Erster Start
+### Erster Start unter macOS
 
 Die App ist nicht mit einer Apple-Developer-ID signiert, deshalb blockiert macOS
 sie beim ersten Mal. Der früher übliche Rechtsklick → Öffnen hilft seit macOS 15
@@ -46,6 +50,35 @@ xattr -dr com.apple.quarantine /Applications/CrocGUI.app
 
 Beides ist nur einmal nötig. Die App kann sich das nicht selbst erlauben — genau
 davon lebt der Schutz.
+
+### Erster Start unter Windows
+
+Der Installer ist nicht mit einem Code-Signing-Zertifikat unterschrieben, deshalb
+meldet sich SmartScreen: **„Der Computer wurde durch Windows geschützt“**. Auf
+**Weitere Informationen** klicken, dann auf **Trotzdem ausführen**. Danach fragt
+Windows nicht mehr.
+
+Der Installer schreibt nur ins Benutzerprofil, ein Administratorkennwort braucht
+er nicht. Wer gar nichts installieren will, nimmt die ZIP-Datei, packt sie
+irgendwohin aus und startet `CrocGUI.exe` direkt.
+
+### Erster Start unter Linux
+
+Das AppImage muss einmal ausführbar gemacht werden:
+
+```bash
+chmod +x CrocGUI-*.AppImage
+./CrocGUI-*.AppImage
+```
+
+Das `.deb` geht den üblichen Weg über `sudo apt install ./CrocGUI-*.deb`.
+
+### Was es nur unter macOS gibt
+
+Zwei Dinge hängen an macOS und fehlen anderswo, ohne dass sonst etwas fehlt:
+der **Finder-Kurzbefehl** (die Zeile in den Einstellungen wird dort gar nicht
+erst gezeigt) und die **Selbstaktualisierung aus der App heraus** — unter Windows
+und Linux führt der Knopf stattdessen auf die Download-Seite.
 
 ## Was die Oberfläche kann
 
@@ -311,7 +344,9 @@ bevorzugt Verbindungen im lokalen Netz ohnehin von selbst.
 
 ## Selbst bauen
 
-Voraussetzungen: macOS (arm64 oder x64) und Node.js 20 oder neuer.
+Voraussetzungen: Node.js 20 oder neuer. Gebaut wird immer für das System, auf
+dem man sitzt — ein DMG entsteht nur auf macOS, ein NSIS-Installer nur auf
+Windows. Für alle drei auf einmal gibt es die GitHub-Action weiter unten.
 
 ```bash
 npm install
@@ -319,18 +354,23 @@ npm run fetch-croc
 npm start
 ```
 
-`fetch-croc` lädt die croc-Binaries für beide Architekturen nach `vendor/`.
-Ohne diesen Schritt greift CrocGUI in der Entwicklung auf ein croc aus dem
-System zurück, sofern eines da ist.
+`fetch-croc` lädt die croc-Binaries für beide Architekturen des laufenden
+Systems nach `vendor/<system>-<architektur>/`. Ohne diesen Schritt greift CrocGUI
+in der Entwicklung auf ein croc aus dem System zurück, sofern eines da ist. Für
+ein anderes System: `node scripts/fetch-croc.js --platform win32` (oder
+`darwin`, `linux`, `--all`).
 
 Eine verteilbare App bauen:
 
 ```bash
-npm run dist
+npm run dist          # für das System, auf dem man sitzt
+npm run dist:mac      # DMG
+npm run dist:win      # NSIS-Installer und ZIP
+npm run dist:linux    # AppImage und deb
 ```
 
-Das Ergebnis landet in `build/`. Die Binaries werden vorher automatisch geholt
-(`predist`), festgelegt über das Feld `crocVersion` in der `package.json`. Auf
+Das Ergebnis landet in `build/`. Die croc-Binaries holt jedes dieser Skripte
+vorher selbst, festgelegt über das Feld `crocVersion` in der `package.json`. Auf
 eine neuere croc-Fassung wechseln:
 
 ```bash
@@ -345,6 +385,30 @@ Fassungen veröffentlichen:
 ```bash
 npm version patch && npm run dist -- --publish always
 ```
+
+### Alle drei Systeme auf einmal
+
+Ein DMG lässt sich nur auf macOS bauen, ein NSIS-Installer nur auf Windows —
+ein einzelner Rechner kommt also nicht weit. `.github/workflows/build.yml`
+startet deshalb drei Läufer gleichzeitig, einen je System, und sammelt die
+Pakete danach ein.
+
+Ausgelöst wird das bei jedem Push auf `main`, bei jedem Pull Request und von
+Hand über **Actions → Build → Run workflow**. Die Pakete hängen dann als
+Artefakte am Lauf.
+
+Kommt der Push mit einem Tag, entsteht zusätzlich eine Veröffentlichung mit
+allen sechs Dateien daran — als Entwurf, damit man vor dem Freigeben noch
+einmal hinsehen kann:
+
+```bash
+npm version patch      # setzt die Fassung und legt den Tag an
+git push --follow-tags
+```
+
+Signiert wird nichts: weder mit einer Apple-Developer-ID noch mit einem
+Windows-Zertifikat. Beides kostet Geld und ändert an der Funktion nichts — es
+erspart den Nutzern nur die Warnung beim ersten Start.
 
 ## Tests
 

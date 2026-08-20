@@ -10,15 +10,52 @@ const settings = require('./settings');
  * croc-Binary finden
  * ------------------------------------------------------------------ */
 
-const CANDIDATES = [
-  '/opt/homebrew/bin/croc',
-  '/usr/local/bin/croc',
-  '/usr/bin/croc',
-  path.join(os.homedir(), 'go', 'bin', 'croc'),
-  path.join(os.homedir(), '.local', 'bin', 'croc')
-];
+const WIN = process.platform === 'win32';
+
+/** Wie das Programm auf diesem System heisst. */
+const EXE = WIN ? 'croc.exe' : 'croc';
+
+// Die ueblichen Installationsorte, wenn croc nicht im PATH steht.
+const CANDIDATES = WIN
+  ? [
+    // winget legt einen Verweis hierhin, scoop und chocolatey eigene Shims.
+    path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Links', EXE),
+    path.join(os.homedir(), 'scoop', 'shims', EXE),
+    path.join(process.env.ProgramData || 'C:/ProgramData', 'chocolatey', 'bin', EXE),
+    path.join(process.env.ProgramFiles || 'C:/Program Files', 'croc', EXE),
+    path.join(os.homedir(), 'go', 'bin', EXE)
+  ]
+  : [
+    '/opt/homebrew/bin/croc',
+    '/usr/local/bin/croc',
+    '/usr/bin/croc',
+    '/snap/bin/croc',
+    path.join(os.homedir(), 'go', 'bin', 'croc'),
+    path.join(os.homedir(), '.local', 'bin', 'croc')
+  ];
+
+// Der Hinweis, wenn gar kein croc zu finden ist - je System ein anderer Weg.
+const INSTALL_HINT = {
+  darwin: 'Installiere es mit "brew install croc" oder trage den Pfad in den Einstellungen ein.',
+  win32: 'Installiere es mit "winget install schollz.croc" oder trage den Pfad in den Einstellungen ein.',
+  linux: 'Installiere es ueber die Paketverwaltung deiner Distribution oder trage den Pfad in den Einstellungen ein.'
+}[process.platform] || 'Trage den Pfad in den Einstellungen ein.';
 
 let resolved = null;
+
+/**
+ * Ist das eine Datei, die sich starten laesst? Windows kennt kein
+ * Ausfuehrungsrecht - dort zaehlt, dass die Datei ueberhaupt da ist.
+ */
+function isExecutable(bin) {
+  try {
+    if (!fs.statSync(bin).isFile()) return false;
+    fs.accessSync(bin, WIN ? fs.constants.F_OK : fs.constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Das mit der App ausgelieferte croc. In der gebauten App liegt es neben
@@ -28,8 +65,8 @@ function bundledPath() {
   try {
     const { app } = require('electron');
     return app.isPackaged
-      ? path.join(process.resourcesPath, 'croc')
-      : path.join(app.getAppPath(), 'vendor', `darwin-${process.arch}`, 'croc');
+      ? path.join(process.resourcesPath, EXE)
+      : path.join(app.getAppPath(), 'vendor', `${process.platform}-${process.arch}`, EXE);
   } catch {
     return null;
   }
@@ -67,21 +104,17 @@ async function detect(force = false) {
   const bundled = bundledPath();
   if (bundled) tried.push(bundled);
 
-  // PATH durchsuchen - GUI-Apps auf macOS erben oft nur ein mageres PATH,
+  // PATH durchsuchen - Fenster-Anwendungen erben oft nur ein mageres PATH,
   // deshalb ergaenzen wir die ueblichen Installationsorte.
   const pathDirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
-  for (const dir of pathDirs) tried.push(path.join(dir, 'croc'));
+  for (const dir of pathDirs) tried.push(path.join(dir, EXE));
   tried.push(...CANDIDATES);
 
   const seen = new Set();
   for (const bin of tried) {
     if (seen.has(bin)) continue;
     seen.add(bin);
-    try {
-      fs.accessSync(bin, fs.constants.X_OK);
-    } catch {
-      continue;
-    }
+    if (!isExecutable(bin)) continue;
     const version = await versionOf(bin);
     if (version) {
       resolved = {
@@ -272,9 +305,7 @@ class Runner {
   async start(kind, opts = {}) {
     const bin = await detect();
     if (!bin.ok) {
-      const err = new Error(
-        'croc wurde nicht gefunden. Installiere es mit "brew install croc" oder trage den Pfad in den Einstellungen ein.'
-      );
+      const err = new Error(`croc wurde nicht gefunden. ${INSTALL_HINT}`);
       err.code = 'NO_CROC';
       throw err;
     }
@@ -407,7 +438,7 @@ class Runner {
 }
 
 module.exports = {
-  detect, Runner, parseLine, segments, clean,
+  detect, Runner, parseLine, segments, clean, EXE,
   // Der Kommandobau ist die Stelle, an der schon zweimal etwas
   // durchgerutscht ist; nach aussen gegeben, damit Tests ihn pruefen.
   globalArgs, buildSend, buildReceive, buildRelay

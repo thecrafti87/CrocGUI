@@ -9,6 +9,10 @@
 
    Das Paket ist ein Ordner mit zwei plist-Dateien - kein Automator
    noetig, wir schreiben sie selbst.
+
+   Das gibt es nur unter macOS. Auf anderen Systemen melden die
+   Funktionen hier, dass nichts geht - die Oberflaeche blendet den
+   Punkt dann aus, statt einen Knopf ohne Wirkung zu zeigen.
    ================================================================= */
 
 const fs = require('fs');
@@ -17,6 +21,11 @@ const path = require('path');
 const { execFile } = require('child_process');
 
 const NAME = 'CrocGUI';
+
+/** Nur macOS kennt Finder-Kurzbefehle. */
+function supported() {
+  return process.platform === 'darwin';
+}
 
 function servicePath() {
   return path.join(os.homedir(), 'Library', 'Services', `${NAME}.workflow`);
@@ -182,6 +191,7 @@ function documentPlist(appName) {
 }
 
 function isInstalled() {
+  if (!supported()) return false;
   try {
     return fs.statSync(servicePath()).isDirectory();
   } catch {
@@ -191,6 +201,7 @@ function isInstalled() {
 
 /** Schreibt das Paket und meldet es beim System an. */
 function install(label, appName = 'CrocGUI') {
+  if (!supported()) throw new Error('Finder-Kurzbefehle gibt es nur unter macOS.');
   const root = servicePath();
   const contents = path.join(root, 'Contents');
   fs.mkdirSync(contents, { recursive: true });
@@ -203,6 +214,7 @@ function install(label, appName = 'CrocGUI') {
 }
 
 function remove() {
+  if (!supported()) return false;
   try {
     fs.rmSync(servicePath(), { recursive: true, force: true });
     execFile('/System/Library/CoreServices/pbs', ['-flush'], () => {});
@@ -212,4 +224,4 @@ function remove() {
   }
 }
 
-module.exports = { install, remove, isInstalled, servicePath };
+module.exports = { install, remove, isInstalled, servicePath, supported };

@@ -3,6 +3,9 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('croc', {
+  // Ein paar Hinweise und Knoepfe passen nur zu einem System.
+  platform: process.platform,
+
   detect: (force) => ipcRenderer.invoke('croc:detect', force),
 
   getSettings: () => ipcRenderer.invoke('settings:get'),
