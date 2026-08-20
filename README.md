@@ -26,8 +26,8 @@ Grab the package for your machine from
 | `CrocGUI-<version>-x64.dmg` | macOS, Intel |
 | `CrocGUI-Setup-<version>-x64.exe` | Windows 10/11, installer |
 | `CrocGUI-<version>-x64.zip` | Windows 10/11, no install |
-| `CrocGUI-<version>-x64.AppImage` | Linux, anywhere |
-| `CrocGUI-<version>-x64.deb` | Linux, Debian and Ubuntu |
+| `CrocGUI-<version>-x86_64.AppImage` | Linux, anywhere |
+| `CrocGUI-<version>-amd64.deb` | Linux, Debian and Ubuntu |
 
 Nothing else is needed — croc travels inside the app.
 

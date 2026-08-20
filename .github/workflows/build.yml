@@ -36,18 +36,18 @@ jobs:
           - name: macOS
             os: macos-latest
             # macOS-Laeufer sind arm64 - das x64-Paket muss man erbitten.
-            run: npm run dist:mac -- --x64 --arm64
+            run: npm run dist:mac -- --x64 --arm64 --publish never
           - name: Windows
             os: windows-latest
-            run: npm run dist:win
+            run: npm run dist:win -- --publish never
           - name: Linux
             os: ubuntu-latest
-            run: npm run dist:linux
+            run: npm run dist:linux -- --publish never
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -63,9 +63,8 @@ jobs:
           # Ohne Apple-Developer-ID wird nicht signiert - sonst bricht
           # electron-builder auf dem Laeufer ab.
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: CrocGUI-${{ matrix.name }}
           if-no-files-found: error
@@ -86,7 +85,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: pakete
           merge-multiple: true
