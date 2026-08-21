@@ -159,7 +159,10 @@ const RE_SEND_MANY = /Sending (\d+) files?\s*\(([^)]+)\)/;
 const RE_RECV_ONE = /(?:Receiving|Accept(?:ing)?)\s+'(.+?)'\s*\(([^)]+)\)/;
 const RE_PEER = /(?:Sending|Receiving)\s*\((?:->|<-)\s*([^)]+)\)/;
 const RE_PERCENT = /(\d{1,3})%/;
-const RE_DETAIL = /\(([^()]*?[\d.]+\s*\/\s*[\d.]+[^()]*)\)/;
+// Seit croc 11.2 steht auch vor dem Schraegstrich eine Einheit:
+// "( 0 B/12 MB)" statt frueher "(1.2/28 GB, ...)". Ohne die
+// Einheit im Muster verliert die Anzeige Menge und Tempo.
+const RE_DETAIL = /\(([^()]*?[\d.]+\s*[KMGTP]?B?\s*\/\s*[\d.]+[^()]*)\)/;
 const RE_ETA = /\[([^\]]+)\]/;
 const RE_ERROR = /^\s*(?:error|Error|panic):?\s*(.+)$/;
 // Text kommt nicht als Datei an, sondern wird ausgegeben - wir fangen ihn

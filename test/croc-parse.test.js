@@ -82,6 +82,42 @@ test('Fortschritt', async (t) => {
   });
 });
 
+test('das Fortschrittsformat von croc 11.2', async (t) => {
+  // 11.2 setzt auch vor den Schraegstrich eine Einheit. Mit dem alten
+  // Muster fielen Menge und Tempo lautlos weg - der Balken lief, die
+  // Zahlen daneben blieben leer.
+  await t.test('am Anfang, wenn erst wenige Bytes da sind', () => {
+    const evt = parseLine(' gross.bin   0% |                    | ( 0 B/12 MB) [0s:0s]');
+    assert.equal(evt.type, 'progress');
+    assert.equal(evt.bytes, '0 B/12 MB');
+  });
+
+  await t.test('mitten drin, mit Tempo und Restzeit', () => {
+    assert.deepEqual(parseLine(' gross.bin  53% |████      | (6.3 MB/12 MB, 4.1 MB/s) [2s:4s]'), {
+      type: 'progress',
+      percent: 53,
+      bytes: '6.3 MB/12 MB',
+      speed: '4.1 MB/s',
+      eta: '2s:4s'
+    });
+  });
+
+  await t.test('am Ende, ohne Einheit vor dem Schraegstrich', () => {
+    // Das alte Format gibt es weiterhin - beide muessen gehen.
+    const evt = parseLine(' gross.bin 100% |████████| (12/12 MB, 292 MB/s)');
+    assert.equal(evt.bytes, '12/12 MB');
+    assert.equal(evt.speed, '292 MB/s');
+  });
+});
+
+test('"Sending 0 files" ist keine Angabe, sondern ein Zwischenstand', () => {
+  // 11.2 meldet fuer eine einzelne Datei zuerst "Sending 0 files" und
+  // korrigiert sich gleich darauf. Als Bezeichnung uebernommen stuende
+  // "0 Dateien" auf der Karte.
+  assert.equal(parseLine('Sending 0 files (11.4 MB)'), null);
+  assert.equal(parseLine('Sending 12 files (340.5 MB)').type, 'meta');
+});
+
 test('das Nachrechnen ist eigener Fortschritt, kein Rueckschritt', () => {
   // croc prueft die Datei nach der Uebertragung noch einmal und faengt
   // dafuer wieder bei 0% an. Als "progress" gemeldet, spraenge der
